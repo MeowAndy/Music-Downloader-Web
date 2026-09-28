@@ -405,6 +405,29 @@ def requests_get(url, timeout=60):
 
 
 if __name__ == '__main__':
-    print('Music Downloader Web 启动中...')
-    print('下载目录: %s' % OUTPUT_DIR)
-    app.run(host='127.0.0.1', port=8899, debug=False)
+    import socket
+    import threading
+    import webbrowser
+
+    print('=' * 46)
+    print('  Music Downloader Web')
+    print('  下载目录: %s' % OUTPUT_DIR)
+    print('  关闭本窗口即停止服务')
+    print('=' * 46)
+
+    def _open_browser():
+        try:
+            webbrowser.open('http://127.0.0.1:8899')
+        except Exception:
+            pass
+
+    # 端口被占用说明已有实例在运行，直接打开浏览器
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        already = s.connect_ex(('127.0.0.1', 8899)) == 0
+    if already:
+        print('服务已在运行，直接打开浏览器...')
+        _open_browser()
+    else:
+        threading.Timer(2.0, _open_browser).start()
+        app.run(host='127.0.0.1', port=8899, debug=False)
