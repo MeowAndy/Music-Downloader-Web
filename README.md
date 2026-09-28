@@ -16,7 +16,7 @@
 | QQ音乐歌单 | 粘贴歌单链接，批量下载全部歌曲 |
 | 全民K歌 | 作品/主页链接解析下载（支持新旧链接格式） |
 | mflac 解密 | 客户端下载的加密 mflac 转可用 flac（Unlock Music WASM） |
-| 人声分离 | 本地 AI 模型分离人声/伴奏（2/4/5 分轨，需 vocal-separate 工具） |
+| 人声分离 | 本地 AI 模型分离人声/伴奏（2/4/5 分轨，启动时隐身自动拉起，缺失可一键下载） |
 | 格式转换 | ffmpeg 转换 MP3，文件一键转换 |
 | 界面 | 三栏布局 · 夜间/日间主题 · 下载文件夹一键打开/清空 |
 
@@ -77,7 +77,7 @@ static/index.html 前端（单文件，无框架）
 
 - **音质原理**：vkey 接口按 `media_mid` + 音质前缀构造文件名（`F000`=SQ flac、`M800`=HQ mp3、`AI00`=母带），带 VIP Cookie 可获取无损直链
 - **歌单原理**：官方网页改用带签名+加密的 `musics.fcg` 通道，签名模块从官方 JS 提取后在 Node 中运行
-- **人声分离**：调用 [vocal-separate](https://github.com/jianchang512/vocal-separate) 工具（需自行下载放到程序旁 `vocal-separate/` 目录，或默认 E 盘路径），未安装时该面板自动降级
+- **人声分离**：调用 [vocal-separate](https://github.com/jianchang512/vocal-separate)。EXE 启动时**自动隐身拉起** AI 引擎（无窗口、无浏览器弹窗）；未安装时面板提供「📥 下载AI组件」一键下载安装（749MB，仅需一次）
 
 ## ⚠️ 免责声明
 

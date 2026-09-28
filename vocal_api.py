@@ -8,9 +8,11 @@
 
 分离结果自动保存到本应用 output/ 目录，与下载的文件统一管理。
 """
+import os
 import socket
 import subprocess
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -20,6 +22,13 @@ import paths
 
 BASE_DIR = paths.APP_DIR
 OUTPUT_DIR = paths.OUTPUT_DIR
+
+# 官方预编译包（首次使用时自动下载）
+VOCAL_RELEASE_URL = 'https://github.com/jianchang512/vocal-separate/releases/download/v0.0.4/vocal-separate-v0.0.4.7z'
+VOCAL_RELEASE_SIZE = 749 * 1048576
+
+# 下载/解压进度状态
+setup_state = {'downloading': False, 'progress': 0, 'stage': '', 'error': ''}
 
 
 def _find_vocal_tool():
@@ -57,14 +66,12 @@ def running():
 
 
 def ensure_running():
-    """确保工具在运行（未运行则启动并等待就绪）"""
+    """确保工具在运行（未运行则隐身启动：无窗口、无浏览器弹窗）"""
     if running():
         return
     if not VOCAL_EXE:
-        raise RuntimeError('未找到人声分离工具（vocal-separate）。'
-                           '可将工具文件夹放到本程序旁边的 vocal-separate/ 目录，'
-                           '或保持默认安装路径')
-    subprocess.Popen([str(VOCAL_EXE)], cwd=str(VOCAL_TOOL_DIR))
+        raise RuntimeError('未找到人声分离工具，请先点击「下载AI组件」')
+    _start_hidden()
     for _ in range(60):
         if running():
             # 等服务真正可响应
@@ -75,7 +82,90 @@ def ensure_running():
             except Exception:
                 pass
         time.sleep(0.5)
-    raise RuntimeError('人声分离工具启动超时，请手动双击 start.exe 后重试')
+    raise RuntimeError('人声分离工具启动超时')
+
+
+def _start_hidden():
+    """隐身启动：CREATE_NO_WINDOW 隐藏控制台，BROWSER 环境变量劫持阻止弹浏览器"""
+    # 劫持 webbrowser：指向一个立即退出的脚本，工具就不会打开浏览器窗口
+    nop = paths.RES_DIR / 'vendor' / 'nop.cmd'
+    env = os.environ.copy()
+    if nop.is_file():
+        env['BROWSER'] = str(nop)
+    subprocess.Popen([str(VOCAL_EXE)], cwd=str(VOCAL_TOOL_DIR),
+                     creationflags=0x08000000,  # CREATE_NO_WINDOW
+                     env=env)
+
+
+def auto_start_async():
+    """应用启动时后台静默拉起工具（不阻塞启动）"""
+    def _worker():
+        try:
+            if VOCAL_EXE:
+                ensure_running()
+        except Exception:
+            pass
+    threading.Thread(target=_worker, daemon=True, name='vocal-autostart').start()
+
+
+def start_setup_async():
+    """后台下载并安装官方工具包（首次使用，749MB）"""
+    if setup_state['downloading']:
+        return
+    if VOCAL_EXE:
+        return
+    setup_state.update({'downloading': True, 'progress': 0, 'stage': '准备下载', 'error': ''})
+
+    def _worker():
+        try:
+            import urllib.request
+            archive = BASE_DIR / 'vocal-separate.7z'
+            setup_state['stage'] = '下载中（749MB，取决于网速）'
+            def _report(block, blocksize, totalsize):
+                if totalsize > 0:
+                    setup_state['progress'] = min(100, int(block * blocksize * 100 / totalsize))
+            urllib.request.urlretrieve(VOCAL_RELEASE_URL, archive, reporthook=_report)
+            setup_state.update({'stage': '解压中（约1-3分钟）', 'progress': 0})
+            # 解压
+            target = BASE_DIR / 'vocal-separate'
+            try:
+                import py7zr
+                with py7zr.SevenZipFile(archive, 'r') as z:
+                    z.extractall(target)
+            except ImportError:
+                # 回退用系统 tar（bsdtar 支持 7z）
+                subprocess.run(['tar', '-xf', str(archive), '-C', str(target)],
+                               capture_output=True, timeout=3600)
+            # 官方包解压后可能带一层目录，找到 start.exe 所在层
+            global VOCAL_TOOL_DIR, VOCAL_EXE
+            found = _find_vocal_tool()
+            if not found:
+                # 找一层子目录
+                for d in target.rglob('start.exe'):
+                    found = d.parent
+                    break
+            if not found:
+                raise RuntimeError('解压后未找到 start.exe')
+            VOCAL_TOOL_DIR, VOCAL_EXE = found, found / 'start.exe'
+            archive.unlink(missing_ok=True)
+            setup_state.update({'stage': '启动AI引擎', 'progress': 100})
+            ensure_running()
+            setup_state.update({'stage': '完成', 'downloading': False})
+        except Exception as e:
+            setup_state.update({'downloading': False, 'error': str(e)[:150],
+                                'stage': '失败'})
+    threading.Thread(target=_worker, daemon=True, name='vocal-setup').start()
+
+
+def setup_status():
+    return {
+        'tool_found': VOCAL_EXE is not None,
+        'tool_dir': str(VOCAL_TOOL_DIR) if VOCAL_TOOL_DIR else '',
+        'downloading': setup_state['downloading'],
+        'progress': setup_state['progress'],
+        'stage': setup_state['stage'],
+        'error': setup_state['error'],
+    }
 
 
 def _session():

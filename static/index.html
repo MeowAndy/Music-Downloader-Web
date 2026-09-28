@@ -292,7 +292,7 @@
         </div>
         <div class="panel-body" id="vocalBody">
           <div class="note">本地 AI 模型分离人声/伴奏，结果自动保存到下载文件夹。中文歌曲建议 2stems。</div>
-          <div style="padding:2px 4px 8px">
+          <div id="vocalInputs" style="padding:2px 4px 8px">
             <select id="vocalFile" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none">
               <option value="">— 选择已下载的音频文件 —</option>
             </select>
@@ -791,6 +791,7 @@ $('#cookieClear').onclick = async () => {
 
 /* ---------------- 人声分离（原生功能） ---------------- */
 let _vocalBusy = false;
+let _vocalSetupTimer = null;
 
 function refreshVocalFileOptions(files) {
   const sel = $('#vocalFile');
@@ -805,10 +806,50 @@ async function refreshVocal() {
   try {
     const j = await api('/api/vocal/status');
     const tag = $('#vocalState');
-    tag.textContent = j.running ? 'AI就绪' : 'AI未启动';
+    const setup = j.setup || {};
+    const body = document.getElementById('vocalInputs');
+    if (!setup.tool_found) {
+      // 工具未安装：显示下载入口或下载进度
+      tag.textContent = 'AI组件未装';
+      tag.className = 'tag vip';
+      if (setup.downloading) {
+        if (body) body.innerHTML = `
+          <div style="padding:14px 4px">
+            <div class="progress-bar"><div class="fill" style="width:${setup.progress}%"></div></div>
+            <div class="progress-text">${esc(setup.stage)} ${setup.progress}%</div>
+          </div>`;
+        if (!_vocalSetupTimer) _vocalSetupTimer = setInterval(refreshVocal, 2000);
+      } else if (setup.error) {
+        if (body) body.innerHTML = `
+          <div class="empty">安装失败：${esc(setup.error)}<br>
+          <button class="btn primary" style="margin-top:10px" onclick="window._vocalSetup()">重试下载</button></div>`;
+        if (_vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
+      } else {
+        if (body) body.innerHTML = `
+          <div class="empty">
+            首次使用需下载 AI 组件（749MB，仅需一次）<br>
+            <button class="btn primary" style="margin-top:10px" onclick="window._vocalSetup()">📥 下载AI组件</button>
+          </div>`;
+        if (_vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
+      }
+      return;
+    }
+    if (_vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
+    tag.textContent = j.running ? 'AI就绪' : 'AI启动中';
     tag.className = 'tag ' + (j.running ? 'free' : 'vip');
+    if (!j.running && !document.getElementById('vocalFile')) {
+      setTimeout(refreshVocal, 3000);
+    }
   } catch (e) { /* 静默 */ }
 }
+
+window._vocalSetup = async () => {
+  try {
+    await api('/api/vocal/setup', { method: 'POST' });
+    toast('开始下载 AI 组件（749MB），请耐心等待');
+    refreshVocal();
+  } catch (e) { toast(e.message, true); }
+};
 
 async function runSeparate(opts) {
   if (_vocalBusy) { toast('正在分离中，请稍候', true); return; }

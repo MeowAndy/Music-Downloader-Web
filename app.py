@@ -303,6 +303,7 @@ def api_clear_files():
 @app.get('/api/vocal/status')
 def api_vocal_status():
     return jsonify({'ok': True, 'running': vocal_api.running(),
+                    'setup': vocal_api.setup_status(),
                     'models': {'2stems': '人声+伴奏', '4stems': '+鼓+贝斯+其他',
                                '5stems': '+鼓+贝斯+钢琴+其他'}})
 
@@ -311,6 +312,16 @@ def api_vocal_status():
 def api_vocal_start():
     try:
         vocal_api.ensure_running()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return err(e)
+
+
+@app.post('/api/vocal/setup')
+def api_vocal_setup():
+    """下载并安装官方 AI 组件（首次使用，749MB）"""
+    try:
+        vocal_api.start_setup_async()
         return jsonify({'ok': True})
     except Exception as e:
         return err(e)
@@ -429,5 +440,7 @@ if __name__ == '__main__':
         print('服务已在运行，直接打开浏览器...')
         _open_browser()
     else:
+        # 隐身自动拉起人声分离工具（不弹窗口/浏览器）
+        vocal_api.auto_start_async()
         threading.Timer(2.0, _open_browser).start()
         app.run(host='127.0.0.1', port=8899, debug=False)
