@@ -1,0 +1,19 @@
+# 本地私有数据（绝不上传）
+qq_cookie.txt
+vip_state.json
+format_settings.json
+server.log
+selftest_run.log
+
+# 下载输出
+output/
+
+# 大体积二进制（打包时内置进 exe，源码运行请自行放入）
+bin/
+
+# Python
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec

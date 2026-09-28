@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Downloader Web</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg2: #161d24;
+    --bg3: #1e2833;
+    --border: #2a3644;
+    --text: #e6edf3;
+    --text2: #8b98a5;
+    --accent: #31c27c;
+    --accent2: #26a56a;
+    --accent-text: #06281a;
+    --danger: #e5484d;
+    --vip: #f5c518;
+    --shadow: rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f5f8;
+    --bg2: #ffffff;
+    --bg3: #eaeff4;
+    --border: #d7dee6;
+    --text: #1a2430;
+    --text2: #5c6b7a;
+    --accent: #1db470;
+    --accent2: #17995e;
+    --accent-text: #ffffff;
+    --danger: #d93036;
+    --vip: #b8860b;
+    --shadow: rgba(30,50,80,.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+    transition: background .3s, color .3s;
+  }
+  .container { max-width: 1440px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  header { text-align: center; padding: 20px 0 6px; }
+  header h1 {
+    font-size: 25px; font-weight: 700; letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--accent), #5eead4);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { color: var(--text2); font-size: 13px; margin-top: 5px; }
+
+  .search-box { display: flex; gap: 10px; margin: 18px 0 8px; }
+  .search-box input {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 16px; font-size: 15px; color: var(--text);
+    outline: none; transition: border-color .2s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box button {
+    background: var(--accent); color: var(--accent-text); border: none; border-radius: 10px;
+    padding: 13px 26px; font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .2s; white-space: nowrap;
+  }
+  .search-box button:hover { background: var(--accent2); }
+  .search-box button:disabled { opacity: .6; cursor: wait; }
+
+  .hint { color: var(--text2); font-size: 12.5px; text-align: center; margin-bottom: 16px; line-height: 2; }
+  .hint kbd {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; font-size: 11px; color: var(--accent);
+  }
+
+  /* ---------- 三栏布局 ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+  @media (max-width: 1080px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; display: flex; flex-direction: column;
+    max-height: calc(100vh - 210px); min-height: 320px;
+  }
+  .col-mid {
+    height: calc(100vh - 210px); min-height: 580px;
+  }
+  .col-mid .panel { max-height: none; }
+  #vocalResults audio { width: 100%; height: 32px; margin-top: 4px; }
+  .panel-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    background: var(--bg2); position: sticky; top: 0; z-index: 5;
+  }
+  .panel-head h2 { font-size: 15px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel-body { padding: 10px; overflow-y: auto; flex: 1; }
+  .panel-body::-webkit-scrollbar { width: 8px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+  .panel-body::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+  /* ---------- 通用组件 ---------- */
+  .btn {
+    background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 13px; font-size: 13px; cursor: pointer;
+    transition: all .2s; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent2); }
+  .btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn .spinner { width: 12px; height: 12px; border-width: 2px; margin-right: 4px; vertical-align: -2px; }
+  .btn.done { border-color: var(--accent); color: var(--accent); }
+
+  .spinner {
+    display: inline-block; width: 18px; height: 18px; vertical-align: -4px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { opacity: .4 } 50% { opacity: 1 } }
+
+  .status { text-align: center; color: var(--text2); font-size: 14px; padding: 40px 0; }
+  .status.error { color: var(--danger); }
+  .empty { color: var(--text2); font-size: 13px; text-align: center; padding: 26px 10px; line-height: 1.9; }
+
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; margin-bottom: 10px;
+  }
+  .card .title-row { display: flex; align-items: center; gap: 12px; }
+  .card img.cover {
+    width: 56px; height: 56px; border-radius: 10px; object-fit: cover;
+    background: var(--bg3); flex-shrink: 0;
+  }
+  .card .info { flex: 1; min-width: 0; }
+  .card .info h2 { font-size: 15.5px; font-weight: 600; margin-bottom: 4px; word-break: break-all; }
+  .card .info .meta { color: var(--text2); font-size: 12.5px; line-height: 1.7; }
+
+  .list { margin-top: 2px; }
+  .song {
+    display: flex; align-items: center; gap: 10px; padding: 10px 8px;
+    border-radius: 10px; transition: background .15s;
+  }
+  .song:hover { background: var(--bg3); }
+  .song .idx { color: var(--text2); font-size: 12px; width: 22px; text-align: right; flex-shrink: 0; }
+  .song .main { flex: 1; min-width: 0; }
+  .song .name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song .sub { color: var(--text2); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag {
+    display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 4px;
+    margin-left: 6px; vertical-align: 1px; font-weight: 600;
+  }
+  .tag.vip { background: rgba(245,197,24,.12); color: var(--vip); border: 1px solid rgba(245,197,24,.35); }
+  .tag.free { background: rgba(49,194,124,.1); color: var(--accent); border: 1px solid rgba(49,194,124,.3); }
+
+  .progress-bar {
+    height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden;
+    margin: 12px 0 6px;
+  }
+  .progress-bar .fill {
+    height: 100%; background: var(--accent); border-radius: 2px;
+    transition: width .3s; width: 0;
+  }
+  .progress-text { color: var(--text2); font-size: 12.5px; text-align: center; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+    padding: 11px 22px; border-radius: 10px; font-size: 14px; transition: transform .3s;
+    max-width: 90vw; z-index: 99; box-shadow: 0 8px 30px var(--shadow);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.err { border-color: var(--danger); color: var(--danger); }
+
+  .file-row {
+    display: flex; align-items: center; gap: 8px; padding: 8px;
+    border-radius: 8px; font-size: 13px;
+  }
+  .file-row:hover { background: var(--bg3); }
+  .file-row .fname { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-row .fsize { color: var(--text2); font-size: 11.5px; flex-shrink: 0; }
+
+  .note {
+    background: rgba(49,194,124,.07); border: 1px solid rgba(49,194,124,.25);
+    border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--text2);
+    margin: 8px 0; line-height: 1.7;
+  }
+
+  .fmt-switch { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; vertical-align: middle; margin-left: 4px; }
+  .fmt-btn {
+    background: var(--bg3); color: var(--text2); border: none; padding: 3px 10px;
+    font-size: 11.5px; cursor: pointer; transition: all .2s;
+  }
+  .fmt-btn.active { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+  .head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .icon-btn {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; transition: all .2s;
+  }
+  .icon-btn:hover { border-color: var(--accent); }
+
+  .card#loginPanel { margin-bottom: 14px; }
+  textarea#cookieInput {
+    width: 100%; margin-top: 12px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px; color: var(--text); font-size: 12.5px;
+    font-family: monospace; height: 90px; resize: vertical;
+  }
+
+  footer { text-align: center; color: var(--text2); font-size: 12px; padding: 26px 0 0; line-height: 1.8; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>♪ Music Downloader Web</h1>
+    <p>QQ音乐 + 全民K歌 · 在线搜索与下载</p>
+    <div class="head-actions" style="justify-content:center;margin-top:10px">
+      <button class="icon-btn" id="loginBtn">🔑 登录设置</button>
+      <button class="icon-btn" id="themeBtn">🌙 夜间</button>
+    </div>
+  </header>
+
+  <div class="card" id="loginPanel" style="display:none">
+    <div class="title-row">
+      <div class="info">
+        <h2>QQ音乐登录 Cookie</h2>
+        <div class="meta">
+          QQ音乐搜索与付费歌曲下载需要登录态。请在浏览器登录 <b>y.qq.com</b> 后，
+          按 F12 → 网络/应用 → 复制 Cookie，粘贴到下面。<br>
+          Cookie 只保存在本机（web/qq_cookie.txt），仅用于搜索/下载请求。
+        </div>
+      </div>
+    </div>
+    <textarea id="cookieInput" placeholder="粘贴 Cookie（包含 uin=...; qqmusic_key=...; ...）"></textarea>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn primary" id="cookieSave">保存</button>
+      <button class="btn" id="cookieClear">清除</button>
+      <span id="cookieStatus" style="align-self:center;color:var(--text2);font-size:13px"></span>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <input id="input" type="text" placeholder="输入歌名/歌手搜索，或粘贴 全民K歌/QQ音乐歌单 链接" autofocus>
+    <button id="goBtn">开 始</button>
+  </div>
+  <div class="hint">
+    输入关键词在 QQ音乐乐库搜索 · 粘贴
+    <kbd>全民K歌作品/主页链接</kbd> 或 <kbd>QQ音乐歌单链接</kbd> 解析下载
+    <span style="margin-left:10px">下载音质：
+      <span class="fmt-switch" id="fmtSwitch">
+        <button class="fmt-btn" data-fmt="standard">标准128k</button><button class="fmt-btn" data-fmt="hq">HQ 320k</button><button class="fmt-btn active" data-fmt="sq">SQ无损</button><button class="fmt-btn" data-fmt="master">臻品母带</button>
+      </span>
+    </span>
+  </div>
+
+  <div class="layout">
+    <!-- 左栏：搜索/解析结果 -->
+    <section class="panel">
+      <div class="panel-head"><h2>🔍 搜索结果</h2><span id="resultCount" style="color:var(--text2);font-size:12px"></span></div>
+      <div class="panel-body" id="result">
+        <div class="empty">输入关键词开始搜索<br>或粘贴 K歌/歌单 链接解析</div>
+      </div>
+    </section>
+
+    <!-- 中栏：mflac 转换 + 人声分离 -->
+    <div class="col-mid" style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <section class="panel" style="max-height:none;flex:1 1 340px">
+        <div class="panel-head">
+          <h2>🔓 mflac 转换</h2>
+          <button class="btn" id="vipRefresh" style="padding:4px 10px;font-size:12px">刷新</button>
+          <button class="btn" id="vipSetFolder" style="padding:4px 10px;font-size:12px">目录</button>
+        </div>
+        <div class="panel-body">
+          <div class="note">付费歌曲可直接在左侧搜索下载（走登录Cookie）。此栏转换客户端下载的 .mflac 文件。<br>目录：<b id="vipFolder">-</b> <span id="vipFolderState" style="color:var(--danger)"></span></div>
+          <div class="list" id="vipFiles"></div>
+          <div id="vipHistory"></div>
+        </div>
+      </section>
+
+      <section class="panel" style="max-height:none;flex:3 1 480px">
+        <div class="panel-head">
+          <h2>🎤 人声分离</h2>
+          <span class="tag free" id="vocalState">本地AI</span>
+        </div>
+        <div class="panel-body" id="vocalBody">
+          <div class="note">本地 AI 模型分离人声/伴奏，结果自动保存到下载文件夹。中文歌曲建议 2stems。</div>
+          <div style="padding:2px 4px 8px">
+            <select id="vocalFile" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none">
+              <option value="">— 选择已下载的音频文件 —</option>
+            </select>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <select id="vocalModel" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12.5px;outline:none">
+                <option value="2stems">2stems · 人声+伴奏</option>
+                <option value="4stems">4stems · +鼓+贝斯</option>
+                <option value="5stems">5stems · +钢琴</option>
+              </select>
+              <button class="btn primary" id="vocalGo">开始分离</button>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+              <button class="btn" id="vocalUploadBtn" style="flex:1">📤 上传本地文件分离</button>
+              <input type="file" id="vocalUpload" accept=".mp3,.wav,.flac,.mp4,.m4a,.avi,.mkv,.mov,.mpeg" style="display:none">
+            </div>
+            <div style="margin-top:6px;color:var(--text2);font-size:11.5px;text-align:center">选择上方列表或上传本地文件，二选一</div>
+          </div>
+          <div id="vocalProgress" style="display:none;padding:10px">
+            <div class="progress-bar"><div class="fill" style="width:50%;animation:pulse 1.5s infinite"></div></div>
+            <div class="progress-text" id="vocalProgressText">分离中…（约10秒-几分钟，取决于歌曲长度）</div>
+          </div>
+          <div id="vocalResults"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 右栏：已下载文件 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>📥 已下载文件</h2>
+        <button class="btn" id="openFolderBtn" style="padding:4px 10px;font-size:12px">📂 打开</button>
+        <button class="btn danger" id="clearFilesBtn" style="padding:4px 10px;font-size:12px">🗑 清空</button>
+      </div>
+      <div class="panel-body" id="files">
+        <div class="empty">暂无文件</div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    基于 <a href="https://github.com/Li4n0/Music-Downloader" target="_blank">Music-Downloader</a>
+    与 <a href="https://github.com/T-K-233/KG-Downloader" target="_blank">KG-Downloader</a> 重制为 Web 版 ·
+    接口已全部更新为当前可用版本 · 仅供个人学习使用
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const result = $('#result');
+const input = $('#input');
+const goBtn = $('#goBtn');
+
+function toast(msg, isErr) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.className = 'toast', 3200);
+}
+
+function fmtSize(n) {
+  if (n > 1048576) return (n / 1048576).toFixed(1) + ' MB';
+  if (n > 1024) return (n / 1024).toFixed(0) + ' KB';
+  return n + ' B';
+}
+function fmtTime(s) {
+  if (!s) return '';
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({ok: false, error: '响应解析失败'}));
+  if (!r.ok || !j.ok) throw new Error(j.error || ('请求失败 ' + r.status));
+  return j;
+}
+
+function showStatus(html, isErr) {
+  result.innerHTML = `<div class="status${isErr ? ' error' : ''}">${html}</div>`;
+}
+
+/* ---------------- 主题切换 ---------------- */
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  $('#themeBtn').textContent = theme === 'light' ? '☀️ 日间' : '🌙 夜间';
+  localStorage.setItem('theme', theme);
+}
+$('#themeBtn').onclick = () => {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+};
+applyTheme(localStorage.getItem('theme') || 'dark');
+
+/* ---------------- 下载（保存到服务端 output/） ---------------- */
+let _lastInput = '';
+let _fmt = 'sq';  // 下载音质: standard | hq | sq | master
+
+const Q_NAMES = { standard: '标准128k', hq: 'HQ 320k', sq: 'SQ无损', master: '臻品母带' };
+
+document.querySelectorAll('.fmt-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _fmt = btn.dataset.fmt;
+    toast('下载音质已切换为 ' + Q_NAMES[_fmt] + '（无此音质时自动降低）');
+  };
+});
+
+function fmtParam() { return '&quality=' + _fmt; }
+
+async function downloadToServer(url, opts) {
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({ok: false, error: '响应解析失败'}));
+  if (!r.ok || !j.ok) throw new Error(j.error || ('请求失败 ' + r.status));
+  return j;
+}
+
+async function openFolder() {
+  try {
+    await api('/api/open_folder', { method: 'POST' });
+    toast('已在资源管理器打开下载文件夹');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function clearFiles() {
+  if (!confirm('确定清空下载文件夹中的所有文件？此操作不可恢复。')) return;
+  try {
+    const j = await api('/api/clear_files', { method: 'POST' });
+    toast(`已清空 ${j.removed} 个文件`);
+    refreshFiles();
+  } catch (e) { toast(e.message, true); }
+}
+
+function setBtnLoading(btn, loading, text) {
+  if (loading) {
+    btn.dataset.orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>' + (text || '下载中');
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+  }
+}
+
+async function downloadSong(btn, url) {
+  setBtnLoading(btn, true);
+  try {
+    const j = await downloadToServer(url);
+    btn.classList.add('done');
+    btn.innerHTML = '✓ 已下载';
+    const q = j.quality_name ? ` · ${j.quality_name}` : '';
+    toast(`已保存到下载文件夹: ${j.name}（${fmtSize(j.size)}${q}）`);
+    refreshFiles();
+  } catch (e) {
+    setBtnLoading(btn, false);
+    toast(e.message, true);
+  }
+}
+
+/* ---------------- 搜索 ---------------- */
+async function doSearch(kw) {
+  showStatus('<span class="spinner"></span>正在搜索「' + esc(kw) + '」...');
+  try {
+    const j = await api('/api/search?kw=' + encodeURIComponent(kw));
+    if (!j.songs.length) { showStatus('没有找到相关歌曲', true); return; }
+    renderSongs(j.songs, '搜索结果');
+  } catch (e) {
+    showStatus(esc(e.message), true);
+  }
+}
+
+function renderSongs(songs, title, dlUrlFn) {
+  window._songs = songs;
+  window._songsDlFn = dlUrlFn || null;
+  const rows = songs.map((s, i) => {
+    const isVip = s.pay_play == 1;
+    return `
+    <div class="song">
+      <div class="idx">${i + 1}</div>
+      <div class="main">
+        <div class="name">${esc(s.name)}${isVip ? '<span class="tag vip">VIP</span>' : '<span class="tag free">免费</span>'}</div>
+        <div class="sub">${esc(s.singer)}${s.album ? ' · ' + esc(s.album) : ''}${s.duration ? ' · ' + fmtTime(s.duration) : ''}</div>
+      </div>
+      <button class="btn" ${isVip ? `title="标记为VIP，登录Cookie有效时可直接下载" onclick="window._dlIdx(this, ${i})"` : `onclick="window._dlIdx(this, ${i})"`}>⬇ 下载</button>
+    </div>`;
+  }).join('');
+  result.innerHTML = `
+    <div class="card">
+      <div class="title-row">
+        <div class="info"><h2>${esc(title)}</h2><div class="meta">共 ${songs.length} 首</div></div>
+        <button class="btn primary" id="dlAll">全部下载</button>
+      </div>
+      <div class="progress-bar" id="pbar" style="display:none"><div class="fill" id="pfill"></div></div>
+      <div class="progress-text" id="ptext" style="display:none"></div>
+      <div class="list">${rows}</div>
+    </div>`;
+  $('#resultCount').textContent = songs.length + ' 首';
+  window._dlIdx = (btn, i) => {
+    const s = window._songs[i];
+    const url = window._songsDlFn
+      ? window._songsDlFn(s)
+      : `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer)}${fmtParam()}`;
+    downloadSong(btn, url);
+  };
+  $('#dlAll').onclick = () => downloadAll(songs, dlUrlFn);
+}
+
+async function downloadAll(songs, dlUrlFn) {
+  const btns = result.querySelectorAll('.song .btn');
+  const bar = $('#pbar'), fill = $('#pfill'), ptext = $('#ptext');
+  bar.style.display = 'block'; ptext.style.display = 'block';
+  let ok = 0, fail = 0;
+  for (let i = 0; i < songs.length; i++) {
+    const s = songs[i];
+    ptext.textContent = `正在下载 ${i + 1}/${songs.length}：${s.name}`;
+    fill.style.width = (i / songs.length * 100) + '%';
+    const btn = btns[i];
+    if (btn.classList.contains('done')) { ok++; continue; }
+    setBtnLoading(btn, true);
+    try {
+      const url = dlUrlFn ? dlUrlFn(s) : `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer)}${fmtParam()}`;
+      await downloadToServer(url);
+      btn.classList.add('done'); btn.innerHTML = '✓ 已下载'; btn.disabled = false;
+      ok++;
+    } catch (e) {
+      setBtnLoading(btn, false);
+      fail++;
+    }
+  }
+  fill.style.width = '100%';
+  ptext.textContent = `完成：成功 ${ok} 首${fail ? '，失败 ' + fail + ' 首（多为付费歌曲）' : ''}`;
+  toast(`批量下载完成（成功 ${ok}${fail ? '，失败 ' + fail : ''}），文件已保存到下载文件夹`);
+  refreshFiles();
+}
+
+/* ---------------- 链接解析 ---------------- */
+async function doParse(url) {
+  showStatus('<span class="spinner"></span>正在解析链接...');
+  try {
+    const j = await api('/api/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (j.type === 'kg_song') renderKgSong(j.data);
+    else if (j.type === 'kg_personal') renderKgPersonal(j.data);
+    else if (j.type === 'qq_playlist') renderPlaylist(j.data);
+  } catch (e) {
+    showStatus(esc(e.message), true);
+  }
+}
+
+function renderKgSong(d) {
+  result.innerHTML = `
+    <div class="card">
+      <div class="title-row">
+        <img class="cover" src="${esc(d.cover)}" onerror="this.style.visibility='hidden'">
+        <div class="info">
+          <h2>${esc(d.song_name)}</h2>
+          <div class="meta">
+            演唱：${esc(d.nick)} · 原唱：${esc(d.singer_name)}<br>
+            得分：${d.score} · 来源：全民K歌
+          </div>
+        </div>
+        <button class="btn primary" id="kgDl">⬇ 下载</button>
+      </div>
+    </div>`;
+  $('#resultCount').textContent = 'K歌单曲';
+  const url = '/api/download_kg?url=' + encodeURIComponent(_lastInput);
+  $('#kgDl').onclick = function () { downloadSong(this, url); };
+}
+
+function renderKgPersonal(d) {
+  const rows = d.works.map((w, i) => `
+    <div class="song">
+      <div class="idx">${i + 1}</div>
+      <div class="main">
+        <div class="name">${esc(w.title)}</div>
+        <div class="sub">播放 ${w.play_count} · ${new Date(w.time * 1000).toLocaleDateString()}</div>
+      </div>
+      <button class="btn" onclick="window._dlkg(this, '${esc(w.shareid)}')">⬇ 下载</button>
+    </div>`).join('');
+  result.innerHTML = `
+    <div class="card">
+      <div class="title-row">
+        <img class="cover" src="${esc(d.head)}" onerror="this.style.visibility='hidden'">
+        <div class="info">
+          <h2>${esc(d.nickname)}</h2>
+          <div class="meta">等级 Lv.${d.level} ${esc(d.levelname)} · 粉丝 ${d.follower} · 作品 ${d.ugc_total} 首</div>
+        </div>
+        <button class="btn primary" id="dlAll">全部下载</button>
+      </div>
+      <div class="note">⚠ 网页版仅能获取公开作品前 8 首，更多作品请在 App 内分享单曲链接</div>
+      <div class="progress-bar" id="pbar" style="display:none"><div class="fill" id="pfill"></div></div>
+      <div class="progress-text" id="ptext" style="display:none"></div>
+      <div class="list">${rows}</div>
+    </div>`;
+  $('#resultCount').textContent = d.works.length + ' 首作品';
+  window._dlkg = (btn, shareid) => {
+    const url = '/api/download_kg?url=' + encodeURIComponent('https://kg.qq.com/node/play?s=' + shareid);
+    downloadSong(btn, url);
+  };
+  $('#dlAll').onclick = () => downloadAllKg(d.works);
+}
+
+async function downloadAllKg(works) {
+  const btns = result.querySelectorAll('.song .btn');
+  const bar = $('#pbar'), fill = $('#pfill'), ptext = $('#ptext');
+  bar.style.display = 'block'; ptext.style.display = 'block';
+  let ok = 0, fail = 0;
+  for (let i = 0; i < works.length; i++) {
+    ptext.textContent = `正在下载 ${i + 1}/${works.length}：${works[i].title}`;
+    fill.style.width = (i / works.length * 100) + '%';
+    const btn = btns[i];
+    if (btn.classList.contains('done')) { ok++; continue; }
+    setBtnLoading(btn, true);
+    try {
+      const url = '/api/download_kg?url=' + encodeURIComponent('https://kg.qq.com/node/play?s=' + works[i].shareid);
+      await downloadToServer(url);
+      btn.classList.add('done'); btn.innerHTML = '✓ 已下载'; btn.disabled = false;
+      ok++;
+    } catch (e) { setBtnLoading(btn, false); fail++; }
+  }
+  fill.style.width = '100%';
+  ptext.textContent = `完成：成功 ${ok} 首${fail ? '，失败 ' + fail + ' 首' : ''}`;
+  refreshFiles();
+}
+
+function renderPlaylist(d) {
+  renderSongs(d.songs, '歌单：' + d.name);
+}
+
+/* ---------------- mflac 转换（手动按需） ---------------- */
+async function refreshVip() {
+  try {
+    const s = await api('/api/vip/status');
+    $('#vipFolder').textContent = s.watch_folder || '未设置';
+    $('#vipFolderState').textContent = s.watch_folder && !s.folder_exists ? '（目录不存在）' : '';
+    const box = $('#vipFiles');
+    if (!s.files.length) {
+      box.innerHTML = '<div class="empty">目录中暂无 .mflac 文件<br>（付费歌曲可直接在左侧搜索下载）</div>';
+    } else {
+      const pending = s.files.filter(f => !f.converted).length;
+      box.innerHTML = (pending > 1 ? `<div style="padding:4px 8px 8px"><button class="btn primary" id="vipCvAll">全部转换（${pending} 个）</button></div>` : '') +
+        s.files.map(f => `
+        <div class="song">
+          <div class="idx">${f.converted ? '✓' : '🔒'}</div>
+          <div class="main">
+            <div class="name">${esc(f.name)}</div>
+            <div class="sub">${fmtSize(f.size)} · ${f.converted ? '已转换' : '待转换'}</div>
+          </div>
+          ${f.converted
+            ? '<button class="btn done" disabled>已转换</button>'
+            : `<button class="btn" onclick="window._vipCv(this, ${esc(JSON.stringify(f.path))})">⬇ 转换</button>`}
+        </div>`).join('');
+      const allBtn = document.getElementById('vipCvAll');
+      if (allBtn) allBtn.onclick = () => convertAllVip();
+    }
+    const hist = $('#vipHistory');
+    if (s.history && s.history.length) {
+      hist.innerHTML = '<div class="sub" style="padding:4px 8px;color:var(--text2);font-size:12px">最近转换：</div>' +
+        s.history.slice(0, 8).map(h => `
+        <div class="file-row">
+          <span>${h.ok ? '✅' : '❌'}</span>
+          <div class="fname">${esc(h.ok ? (h.title + ' - ' + h.artist) : h.name)}${h.ok ? '' : ' — ' + esc(h.error)}</div>
+          <div class="fsize">${h.time}</div>
+        </div>`).join('');
+    }
+  } catch (e) { /* 静默 */ }
+}
+
+window._vipCv = async (btn, path) => {
+  setBtnLoading(btn, true, '解密中');
+  try {
+    const j = await api('/api/vip/convert', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path })
+    });
+    btn.classList.add('done'); btn.innerHTML = '✓ 已转换'; btn.disabled = false;
+    toast(`已转换: ${j.title} - ${j.artist} (.${j.ext})`);
+    refreshFiles(); refreshVip();
+  } catch (e) {
+    setBtnLoading(btn, false);
+    toast(e.message, true);
+  }
+};
+
+async function convertAllVip() {
+  const btn = document.getElementById('vipCvAll');
+  if (btn) { btn.disabled = true; btn.textContent = '转换中…（每个约20秒）'; }
+  try {
+    const j = await api('/api/vip/convert_all', { method: 'POST' });
+    toast(`转换完成：成功 ${j.success}${j.fail ? `，失败 ${j.fail}` : ''}`);
+    refreshFiles(); refreshVip();
+  } catch (e) {
+    toast(e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = '全部转换'; }
+  }
+}
+
+$('#vipRefresh').onclick = () => refreshVip();
+$('#vipSetFolder').onclick = async () => {
+  const cur = $('#vipFolder').textContent;
+  const folder = prompt('输入 .mflac 所在文件夹：', cur === '未设置' ? '' : cur);
+  if (folder === null) return;
+  try {
+    await api('/api/vip/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ watch_folder: folder.trim() })
+    });
+    toast('目录已更新');
+    refreshVip();
+  } catch (e) { toast(e.message, true); }
+};
+
+/* ---------------- 已下载文件 ---------------- */
+async function refreshFiles() {
+  try {
+    const j = await api('/api/files');
+    const box = $('#files');
+    if (!j.files.length) {
+      box.innerHTML = '<div class="empty">暂无文件<br>下载的文件会保存在这里</div>';
+    } else {
+      box.innerHTML = j.files.map(f => {
+        const canCv = /\.(m4a|flac|ogg|wav)$/i.test(f.name);
+        return `
+        <div class="file-row">
+          <span>${f.name.match(/\.mp3$/i) ? '🎵' : (f.name.match(/\.flac$/i) ? '🎼' : '🎵')}</span>
+          <div class="fname">${esc(f.name)}</div>
+          <div class="fsize">${fmtSize(f.size)}</div>
+          ${canCv ? `<button class="btn" style="padding:3px 9px;font-size:11.5px" onclick="window._cvFile(this, ${esc(JSON.stringify(f.name))})">转MP3</button>` : ''}
+          <a class="btn" style="padding:3px 9px;font-size:11.5px;text-decoration:none" href="/files/${encodeURIComponent(f.name)}" download>保存</a>
+        </div>`;
+      }).join('');
+    }
+    if (typeof refreshVocalFileOptions === 'function') refreshVocalFileOptions(j.files);
+  } catch (e) {}
+}
+
+window._cvFile = async (btn, name) => {
+  setBtnLoading(btn, true, '转换中');
+  try {
+    const j = await api('/api/convert_file', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, to: 'mp3' })
+    });
+    btn.outerHTML = '<span class="btn done" style="pointer-events:none">✓ 已转MP3</span>';
+    toast(`已转换: ${j.name}`);
+    refreshFiles();
+  } catch (e) {
+    setBtnLoading(btn, false);
+    toast(e.message, true);
+  }
+};
+
+/* ---------------- 登录设置 ---------------- */
+async function refreshCookieStatus() {
+  try {
+    const j = await api('/api/cookie');
+    const el = $('#cookieStatus');
+    if (j.set) {
+      el.innerHTML = '✓ 已登录（QQ号 ' + esc(j.uin || '?') + '）';
+      $('#loginBtn').innerHTML = '🔑 已登录';
+    } else {
+      el.textContent = '未设置';
+      $('#loginBtn').innerHTML = '🔑 登录设置';
+    }
+  } catch (e) {}
+}
+
+$('#loginBtn').onclick = () => {
+  const p = $('#loginPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+};
+$('#cookieSave').onclick = async () => {
+  const v = $('#cookieInput').value.trim();
+  if (!v) { toast('请先粘贴 Cookie', true); return; }
+  try {
+    await api('/api/cookie', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cookie: v}) });
+    toast('Cookie 已保存，搜索/下载功能已启用');
+    refreshCookieStatus();
+    $('#loginPanel').style.display = 'none';
+  } catch (e) { toast(e.message, true); }
+};
+$('#cookieClear').onclick = async () => {
+  try {
+    await api('/api/cookie', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cookie: ''}) });
+    $('#cookieInput').value = '';
+    toast('Cookie 已清除');
+    refreshCookieStatus();
+  } catch (e) { toast(e.message, true); }
+};
+
+/* ---------------- 人声分离（原生功能） ---------------- */
+let _vocalBusy = false;
+
+function refreshVocalFileOptions(files) {
+  const sel = $('#vocalFile');
+  const cur = sel.value;
+  const audios = (files || []).filter(f => /\.(mp3|wav|flac|m4a|ogg|mp4|aac)$/i.test(f.name));
+  sel.innerHTML = '<option value="">— 选择已下载的音频文件 —</option>' +
+    audios.map(f => `<option value="${esc(f.name)}">${esc(f.name)}（${fmtSize(f.size)}）</option>`).join('');
+  if (cur && audios.some(f => f.name === cur)) sel.value = cur;
+}
+
+async function refreshVocal() {
+  try {
+    const j = await api('/api/vocal/status');
+    const tag = $('#vocalState');
+    tag.textContent = j.running ? 'AI就绪' : 'AI未启动';
+    tag.className = 'tag ' + (j.running ? 'free' : 'vip');
+  } catch (e) { /* 静默 */ }
+}
+
+async function runSeparate(opts) {
+  if (_vocalBusy) { toast('正在分离中，请稍候', true); return; }
+  _vocalBusy = true;
+  $('#vocalGo').disabled = true;
+  $('#vocalProgress').style.display = 'block';
+  $('#vocalResults').innerHTML = '';
+  try {
+    let j;
+    if (opts.upload) {
+      const fd = new FormData();
+      fd.append('file', opts.file, opts.file.name);
+      fd.append('model', opts.model);
+      const r = await fetch('/api/vocal/separate_upload', { method: 'POST', body: fd });
+      j = await r.json().catch(() => ({ok: false, error: '响应解析失败'}));
+      if (!r.ok || !j.ok) throw new Error(j.error || '分离失败');
+    } else {
+      j = await api('/api/vocal/separate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: opts.name, model: opts.model })
+      });
+    }
+    const html = `<div class="note" style="margin-top:8px">✓ 分离完成（${j.elapsed}秒），已保存到下载文件夹：</div>` +
+      j.results.map(r => `
+      <div class="song">
+        <div class="idx">🎵</div>
+        <div class="main">
+          <div class="name">${esc(r.name)}</div>
+          <audio src="/files/${encodeURIComponent(r.name)}" controls preload="none"></audio>
+        </div>
+      </div>`).join('');
+    $('#vocalResults').innerHTML = html;
+    toast(`分离完成（${j.elapsed}秒），${j.results.length} 个文件已保存`);
+    refreshFiles();
+    refreshVocal();
+  } catch (e) {
+    toast(e.message, true);
+    refreshVocal();
+  } finally {
+    _vocalBusy = false;
+    $('#vocalGo').disabled = false;
+    $('#vocalProgress').style.display = 'none';
+  }
+}
+
+$('#vocalGo').onclick = () => {
+  const name = $('#vocalFile').value;
+  if (!name) { toast('请先选择要分离的文件', true); return; }
+  runSeparate({ name, model: $('#vocalModel').value });
+};
+
+$('#vocalUploadBtn').onclick = () => $('#vocalUpload').click();
+$('#vocalUpload').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  runSeparate({ upload: true, file, model: $('#vocalModel').value });
+  e.target.value = '';
+};
+
+/* ---------------- 入口 ---------------- */
+function go() {
+  const v = input.value.trim();
+  if (!v) { toast('请输入关键词或链接', true); return; }
+  _lastInput = v;
+  goBtn.disabled = true;
+  setTimeout(() => goBtn.disabled = false, 500);
+  if (/https?:\/\//i.test(v)) doParse(v);
+  else doSearch(v);
+}
+goBtn.onclick = go;
+input.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+$('#openFolderBtn').onclick = openFolder;
+$('#clearFilesBtn').onclick = clearFiles;
+
+refreshFiles();
+refreshCookieStatus();
+refreshVip();
+refreshVocal();
+</script>
+</body>
+</html>
