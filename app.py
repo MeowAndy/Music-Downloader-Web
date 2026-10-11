@@ -14,6 +14,7 @@ import ffmpeg_api
 import kg_api
 import paths
 import qq_api
+import qq_login
 import vocal_api
 import vip_api
 
@@ -55,6 +56,7 @@ def api_cookie_get():
 
 @app.post('/api/cookie')
 def api_cookie_set():
+    # 保留旧接口，便于已有本地配置升级；页面不再暴露 Cookie 输入框。
     body = request.get_json(silent=True) or {}
     cookie = (body.get('cookie') or '').strip()
     if cookie and 'uin' not in cookie:
@@ -62,6 +64,41 @@ def api_cookie_set():
     qq_api.set_cookie(cookie)
     qq_api._apply_cookie()
     return jsonify({'ok': True, 'set': bool(cookie)})
+
+
+@app.post('/api/login/qr/start')
+def api_qr_login_start():
+    try:
+        _task, data = qq_login.manager.start()
+        return jsonify({'ok': True, **data})
+    except Exception as e:
+        return err(e)
+
+
+@app.get('/api/login/qr/status')
+def api_qr_login_status():
+    task_id = (request.args.get('id') or '').strip()
+    if not task_id:
+        return err('缺少登录任务 ID')
+    data = qq_login.manager.status(task_id)
+    if data is None:
+        return jsonify({'ok': False, 'error': '登录任务不存在或已失效'}), 404
+    return jsonify({'ok': True, **data})
+
+
+@app.post('/api/login/qr/cancel')
+def api_qr_login_cancel():
+    body = request.get_json(silent=True) or {}
+    task_id = (body.get('id') or '').strip()
+    if task_id:
+        qq_login.manager.cancel(task_id)
+    return jsonify({'ok': True})
+
+
+@app.post('/api/logout')
+def api_logout():
+    qq_login.manager.logout()
+    return jsonify({'ok': True, 'set': False})
 
 
 @app.get('/api/search')

@@ -24,26 +24,26 @@
 
 1. 到 [Releases](../../releases) 下载 `MusicDownloaderWeb.exe`（单文件，内置全部依赖）
 2. 双击运行，等待自检完成，浏览器自动打开 `http://127.0.0.1:8899`
-3. 点右上角「🔑 登录设置」，粘贴你自己的 QQ音乐 Cookie（见下方说明）
+3. 点右上角「🔑 登录设置」，使用 QQ音乐 App 扫码并确认
 
 > 首次启动需解包内置依赖，约 10~20 秒属正常现象。
 
-### Cookie 获取方法（必需）
+### 扫码登录
 
 QQ音乐搜索与高品质下载需要登录态：
 
-1. 浏览器打开并登录 [y.qq.com](https://y.qq.com)
-2. 按 `F12` → 「网络」或「应用」→ 找到 Cookie → 全选复制
-3. 粘贴到页面右上角「登录设置」→ 保存
+1. 在手机 QQ音乐 App 中准备扫码入口
+2. 打开页面右上角「🔑 登录设置」，等待二维码出现
+3. 使用 QQ音乐 App 扫码并在手机上确认，页面会自动完成登录
 
-Cookie 只保存在你自己电脑上，不会上传到任何地方。
+登录信息只保存在本机的 `qq_cookie.txt`，二维码、会话状态和凭据不会上传到本项目服务器。二维码登录依赖 QQ音乐当前内部接口，平台升级后可能暂时不可用；如需恢复旧版本，可继续使用后端兼容接口导入已有 Cookie。
 
 ## 🔧 源码运行（开发者）
 
 ```bash
 git clone https://github.com/MeowAndy/Music-Downloader-Web.git
 cd Music-Downloader-Web
-pip install flask requests
+pip install flask requests paho-mqtt
 # 放入 node.exe 和 ffmpeg.exe 到 bin/ 目录（歌单/转换功能需要）
 python selftest.py   # 一键启动 + 13项自测
 ```
@@ -53,8 +53,11 @@ python selftest.py   # 一键启动 + 13项自测
 ```bash
 pip install pyinstaller
 # bin/ 下需有 node.exe、ffmpeg.exe
-pyinstaller --onefile --name MusicDownloaderWeb ^
+pyinstaller --clean --noconfirm --onefile --name MusicDownloaderWeb ^
+  --icon app.ico ^
   --add-data "static;static" --add-data "vendor;vendor" --add-data "bin;bin" ^
+  --hidden-import paho.mqtt.client --hidden-import paho.mqtt.properties ^
+  --hidden-import paho.mqtt.packettypes --hidden-import py7zr ^
   app.py
 ```
 
@@ -64,6 +67,7 @@ pyinstaller --onefile --name MusicDownloaderWeb ^
 app.py            Flask 主应用（端口 8899）
 paths.py          路径解析（源码/打包双模式）
 qq_api.py         QQ音乐：搜索 / 四档音质 vkey / 歌单
+qq_login.py       QQ音乐 App 二维码登录与 MQTT 状态管理
 kg_api.py         全民K歌：单曲 / 主页解析
 vip_api.py        mflac 手动转换
 vocal_api.py      人声分离（调用本地 vocal-separate）

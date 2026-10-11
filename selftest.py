@@ -39,7 +39,7 @@ def section(title):
 
 def check_deps():
     section('── 依赖检查 ──')
-    for mod, pip_name in [('flask', 'flask'), ('requests', 'requests')]:
+    for mod, pip_name in [('flask', 'flask'), ('requests', 'requests'), ('paho.mqtt.client', 'paho-mqtt')]:
         try:
             importlib.import_module(mod)
             record('Python 包 %s' % mod, 'ok')
@@ -117,6 +117,15 @@ def run_tests(has_node):
                ('已登录 QQ %s' % j.get('uin')) if cookie_set else '未设置，搜索功能不可用（页面右上角可设置）')
     except Exception as e:
         record('QQ音乐登录 Cookie', 'fail', str(e)[:60])
+
+    # 扫码登录接口（不执行真实账号登录，只检查缺少网络/协议时的可读响应）
+    try:
+        r = requests.post(URL + '/api/login/qr/cancel', json={'id': 'selftest-invalid'}, timeout=10)
+        j = r.json()
+        record('扫码登录取消接口', 'ok' if r.status_code == 200 and j.get('ok') else 'fail',
+               '未创建任务时可安全返回')
+    except Exception as e:
+        record('扫码登录取消接口', 'fail', str(e)[:60])
 
     # 文件列表
     try:

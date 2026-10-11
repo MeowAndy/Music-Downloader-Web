@@ -207,11 +207,10 @@
   .icon-btn:hover { border-color: var(--accent); }
 
   .card#loginPanel { margin-bottom: 14px; }
-  textarea#cookieInput {
-    width: 100%; margin-top: 12px; background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px; color: var(--text); font-size: 12.5px;
-    font-family: monospace; height: 90px; resize: vertical;
-  }
+  .qr-login { display: flex; align-items: center; gap: 18px; margin-top: 12px; }
+  .qr-login img { width: 168px; height: 168px; padding: 8px; background: #fff; border-radius: 10px; object-fit: contain; }
+  .qr-login .qr-copy { flex: 1; min-width: 0; color: var(--text2); font-size: 13px; line-height: 1.8; }
+  @media (max-width: 560px) { .qr-login { flex-direction: column; align-items: center; } .qr-login .qr-copy { text-align: center; } }
 
   footer { text-align: center; color: var(--text2); font-size: 12px; padding: 26px 0 0; line-height: 1.8; }
   footer a { color: var(--accent); text-decoration: none; }
@@ -231,19 +230,22 @@
   <div class="card" id="loginPanel" style="display:none">
     <div class="title-row">
       <div class="info">
-        <h2>QQ音乐登录 Cookie</h2>
-        <div class="meta">
-          QQ音乐搜索与付费歌曲下载需要登录态。请在浏览器登录 <b>y.qq.com</b> 后，
-          按 F12 → 网络/应用 → 复制 Cookie，粘贴到下面。<br>
-          Cookie 只保存在本机（web/qq_cookie.txt），仅用于搜索/下载请求。
-        </div>
+        <h2>QQ音乐扫码登录</h2>
+        <div class="meta">使用 QQ音乐 App 扫描下方二维码并确认，登录信息只保存在本机。</div>
       </div>
     </div>
-    <textarea id="cookieInput" placeholder="粘贴 Cookie（包含 uin=...; qqmusic_key=...; ...）"></textarea>
-    <div style="display:flex;gap:10px;margin-top:10px">
-      <button class="btn primary" id="cookieSave">保存</button>
-      <button class="btn" id="cookieClear">清除</button>
-      <span id="cookieStatus" style="align-self:center;color:var(--text2);font-size:13px"></span>
+    <div class="qr-login">
+      <img id="loginQr" alt="QQ音乐登录二维码" style="display:none">
+      <div class="qr-copy">
+        <div id="cookieStatus">未登录</div>
+        <div id="qrHint" style="margin-top:5px">正在获取二维码…</div>
+        <div id="qrCountdown" style="margin-top:4px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" id="qrRefresh">重新扫码</button>
+          <button class="btn" id="cookieClear">退出登录</button>
+          <button class="btn" id="qrCancel">关闭</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -752,6 +754,27 @@ window._cvFile = async (btn, name) => {
 };
 
 /* ---------------- 登录设置 ---------------- */
+let _qrTask = null;
+let _qrTimer = null;
+let _qrBusy = false;
+
+function stopQrPolling() {
+  if (_qrTimer) { clearInterval(_qrTimer); _qrTimer = null; }
+}
+
+function qrText(status) {
+  return ({waiting: '请使用 QQ音乐 App 扫码', scanned: '已扫码，请在手机上确认登录',
+    success: '✓ 登录成功', expired: '二维码已过期，请重新扫码', cancelled: '已取消扫码',
+    failed: '登录失败，请重新扫码'})[status] || '正在等待扫码…';
+}
+
+function qrErrorText(error) {
+  if (!error) return '';
+  if (/网络|TLS|WebSocket|超时|连接断开/i.test(error)) return error + '（可检查网络后点击重新扫码）';
+  if (/拒绝|订阅|服务端/i.test(error)) return error + '（可稍后重试）';
+  return error;
+}
+
 async function refreshCookieStatus() {
   try {
     const j = await api('/api/cookie');
@@ -760,31 +783,81 @@ async function refreshCookieStatus() {
       el.innerHTML = '✓ 已登录（QQ号 ' + esc(j.uin || '?') + '）';
       $('#loginBtn').innerHTML = '🔑 已登录';
     } else {
-      el.textContent = '未设置';
+      el.textContent = '未登录';
       $('#loginBtn').innerHTML = '🔑 登录设置';
     }
   } catch (e) {}
 }
 
-$('#loginBtn').onclick = () => {
-  const p = $('#loginPanel');
-  p.style.display = p.style.display === 'none' ? 'block' : 'none';
-};
-$('#cookieSave').onclick = async () => {
-  const v = $('#cookieInput').value.trim();
-  if (!v) { toast('请先粘贴 Cookie', true); return; }
-  try {
-    await api('/api/cookie', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cookie: v}) });
-    toast('Cookie 已保存，搜索/下载功能已启用');
+function renderQrStatus(j) {
+  $('#qrHint').textContent = qrErrorText(j.error) || qrText(j.status);
+  $('#qrCountdown').textContent = j.remaining > 0 ? ('二维码有效期约 ' + j.remaining + ' 秒') : '';
+  if (j.status === 'success') {
+    stopQrPolling();
     refreshCookieStatus();
-    $('#loginPanel').style.display = 'none';
-  } catch (e) { toast(e.message, true); }
+    toast('扫码登录成功，搜索/下载功能已启用');
+    setTimeout(() => { $('#loginPanel').style.display = 'none'; }, 500);
+  }
+  if (['expired', 'cancelled', 'failed'].includes(j.status)) stopQrPolling();
+}
+
+async function pollQrStatus() {
+  if (!_qrTask) return;
+  try {
+    const j = await api('/api/login/qr/status?id=' + encodeURIComponent(_qrTask));
+    renderQrStatus(j);
+  } catch (e) {
+    stopQrPolling();
+    $('#qrHint').textContent = e.message || '登录状态获取失败';
+  }
+}
+
+async function startQrLogin() {
+  if (_qrBusy) return;
+  _qrBusy = true;
+  stopQrPolling();
+  $('#loginQr').style.display = 'none';
+  $('#qrHint').textContent = '正在获取二维码…';
+  $('#qrCountdown').textContent = '';
+  try {
+    const j = await api('/api/login/qr/start', {method: 'POST'});
+    _qrTask = j.id;
+    $('#loginQr').src = j.image;
+    $('#loginQr').style.display = 'block';
+    renderQrStatus(j);
+    _qrTimer = setInterval(pollQrStatus, 1500);
+  } catch (e) {
+    $('#qrHint').textContent = e.message || '获取二维码失败';
+  } finally { _qrBusy = false; }
+}
+
+async function cancelQrTask() {
+  stopQrPolling();
+  if (_qrTask) {
+    try { await api('/api/login/qr/cancel', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: _qrTask})}); } catch (e) {}
+    _qrTask = null;
+  }
+}
+
+$('#loginBtn').onclick = async () => {
+  const p = $('#loginPanel');
+  const opening = p.style.display === 'none';
+  p.style.display = opening ? 'block' : 'none';
+  if (opening) startQrLogin();
+  else await cancelQrTask();
 };
+$('#qrRefresh').onclick = startQrLogin;
+$('#qrCancel').onclick = async () => {
+  await cancelQrTask();
+  $('#loginPanel').style.display = 'none';
+};
+window.addEventListener('pagehide', () => { cancelQrTask(); });
 $('#cookieClear').onclick = async () => {
   try {
-    await api('/api/cookie', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cookie: ''}) });
-    $('#cookieInput').value = '';
-    toast('Cookie 已清除');
+    await api('/api/logout', {method: 'POST'});
+    stopQrPolling();
+    _qrTask = null;
+    toast('已退出登录，本机登录信息已清除');
     refreshCookieStatus();
   } catch (e) { toast(e.message, true); }
 };
