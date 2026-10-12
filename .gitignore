@@ -2,6 +2,9 @@
 qq_cookie.txt
 vip_state.json
 format_settings.json
+lyrics_cache.json
+lyrics_cache.json.tmp
+lyrics_cache.tmp
 server.log
 selftest_run.log
 

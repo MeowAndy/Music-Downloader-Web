@@ -15,6 +15,7 @@ import kg_api
 import paths
 import qq_api
 import qq_login
+import lyrics_api
 import vocal_api
 import vip_api
 
@@ -114,6 +115,60 @@ def api_search():
         return err(e)
 
 
+@app.get('/api/lyrics')
+def api_lyrics():
+    mid = (request.args.get('mid') or '').strip()
+    fmt = (request.args.get('format') or 'txt').lower()
+    include_translation = request.args.get('translation', '0') == '1'
+    include_romanization = request.args.get('romanization', '0') == '1'
+    preview = request.args.get('preview', '1') == '1'
+    if not mid:
+        return err('缺少歌曲 mid')
+    if fmt not in ('txt', 'lrc'):
+        return err('歌词格式只支持 txt 或 lrc')
+    try:
+        data = lyrics_api.render(mid, fmt=fmt,
+                                 include_translation=include_translation,
+                                 include_romanization=include_romanization,
+                                 preview=preview)
+        return jsonify({'ok': True, **data})
+    except lyrics_api.LyricError as e:
+        return jsonify({'ok': False, 'error': str(e), 'code': 'LYRIC_ERROR'}), 502
+    except Exception as e:
+        return err(e)
+
+
+@app.get('/api/lyrics/download')
+def api_lyrics_download():
+    mid = (request.args.get('mid') or '').strip()
+    name = request.args.get('name') or '未知歌曲'
+    singer = request.args.get('singer') or ''
+    fmt = (request.args.get('format') or 'txt').lower()
+    include_translation = request.args.get('translation', '0') == '1'
+    include_romanization = request.args.get('romanization', '0') == '1'
+    if not mid:
+        return err('缺少歌曲 mid')
+    if fmt not in ('txt', 'lrc'):
+        return err('歌词格式只支持 txt 或 lrc')
+    try:
+        data = lyrics_api.render(mid, fmt=fmt,
+                                 include_translation=include_translation,
+                                 include_romanization=include_romanization,
+                                 preview=False)
+        if not data.get('has_lyrics'):
+            return jsonify({'ok': False, 'error': '该歌曲暂无歌词', 'code': 'LYRIC_NOT_FOUND'}), 404
+        stem = kg_api.sanitize_filename('%s - %s' % (name, singer)) if singer else kg_api.sanitize_filename(name)
+        path = unique_path(OUTPUT_DIR / (stem + '.' + fmt))
+        path.write_text(data['content'], encoding='utf-8')
+        return jsonify({'ok': True, 'name': path.name, 'size': path.stat().st_size,
+                        'format': fmt, 'cached': data.get('cached', False),
+                        'warnings': data.get('warnings', [])})
+    except lyrics_api.LyricError as e:
+        return jsonify({'ok': False, 'error': str(e), 'code': 'LYRIC_ERROR'}), 502
+    except Exception as e:
+        return err(e)
+
+
 @app.get('/api/song_url')
 def api_song_url():
     mid = request.args.get('mid') or ''
@@ -148,10 +203,16 @@ def api_download():
     singer = request.args.get('singer') or ''
     media_mid = request.args.get('media_mid') or ''
     quality = (request.args.get('quality') or 'sq').lower()
+    lyrics_enabled = request.args.get('lyrics', '0') == '1'
+    lyrics_format = (request.args.get('lyrics_format') or 'txt').lower()
+    include_translation = request.args.get('translation', '0') == '1'
+    include_romanization = request.args.get('romanization', '0') == '1'
     if not mid:
         return err('缺少 mid')
     if quality not in qq_api.QUALITIES:
         return err('不支持的音质: %s' % quality)
+    if lyrics_enabled and lyrics_format not in ('txt', 'lrc'):
+        return err('歌词格式只支持 txt 或 lrc')
     try:
         if not media_mid:
             # 兼容：没有 media_mid 时用标准音质
@@ -170,8 +231,33 @@ def api_download():
         fpath = unique_path(OUTPUT_DIR / fname)
         fpath.write_bytes(audio)
         qnames = {'standard': '标准128k', 'hq': 'HQ 320k', 'sq': 'SQ无损', 'master': '臻品母带'}
-        return jsonify({'ok': True, 'name': fpath.name, 'size': fpath.stat().st_size,
-                        'quality': actual_q, 'quality_name': qnames.get(actual_q, actual_q)})
+        out = {
+            'ok': True, 'name': fpath.name, 'size': fpath.stat().st_size,
+            'quality': actual_q, 'quality_name': qnames.get(actual_q, actual_q),
+            'lyrics': False,
+        }
+        if lyrics_enabled:
+            try:
+                lyric_data = lyrics_api.render(
+                    mid, fmt=lyrics_format,
+                    include_translation=include_translation,
+                    include_romanization=include_romanization,
+                    preview=False,
+                )
+                if lyric_data.get('has_lyrics'):
+                    lyric_path = fpath.with_suffix('.' + lyrics_format)
+                    lyric_path.write_text(lyric_data['content'], encoding='utf-8')
+                    out.update({'lyrics': True, 'lyrics_name': lyric_path.name,
+                                'lyrics_size': lyric_path.stat().st_size,
+                                'lyrics_cached': lyric_data.get('cached', False),
+                                'lyrics_warnings': lyric_data.get('warnings', [])})
+                else:
+                    out.update({'lyrics_error': '该歌曲暂无歌词',
+                                'lyrics_warnings': lyric_data.get('warnings', [])})
+            except Exception as lyric_error:
+                # 歌词是附加能力，不能让已完成的音频下载失败。
+                out['lyrics_error'] = str(lyric_error)[:200]
+        return jsonify(out)
     except Exception as e:
         return err(e)
 

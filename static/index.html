@@ -107,7 +107,7 @@
   .btn {
     background: var(--bg3); color: var(--text); border: 1px solid var(--border);
     border-radius: 8px; padding: 7px 13px; font-size: 13px; cursor: pointer;
-    transition: all .2s; white-space: nowrap;
+    transition: all .2s; white-space: normal;
   }
   .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
@@ -198,6 +198,25 @@
     font-size: 11.5px; cursor: pointer; transition: all .2s;
   }
   .fmt-btn.active { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .lyrics-options { display: flex; align-items: center; justify-content: center; gap: 6px 10px; flex-wrap: wrap; margin: 8px auto 0; color: var(--text2); font-size: 12px; }
+  .lyrics-options label { display: inline-flex; align-items: center; gap: 3px; }
+  .lyrics-options select { background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; font-size: 11.5px; max-width: 100%; }
+  .lyrics-options input { accent-color: var(--accent); vertical-align: -1px; }
+  .lyric-preview { margin: 8px 0 4px 32px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; white-space: pre-wrap; line-height: 1.7; max-height: 280px; overflow: auto; font-size: 12.5px; }
+  .lyric-preview .lyric-section-title { color: var(--accent); font-weight: 600; margin-top: 8px; }
+  .lyric-preview .lyric-section-title:first-child { margin-top: 0; }
+  .lyric-preview .lyric-meta { color: var(--text2); font-size: 11.5px; margin-bottom: 8px; }
+  .lyric-preview .lyric-warning { color: var(--vip); font-size: 11.5px; margin-top: 6px; }
+  .song-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; max-width: 42%; }
+  .song-actions .btn { padding: 5px 8px; font-size: 11.5px; }
+  .song-row-wrap { min-width: 0; }
+  @media (max-width: 560px) {
+    .lyrics-options { justify-content: flex-start; }
+    .song { align-items: flex-start; flex-wrap: wrap; }
+    .song .main { min-width: calc(100% - 42px); }
+    .song-actions { width: calc(100% - 32px); max-width: none; margin-left: 32px; justify-content: flex-start; }
+    .lyric-preview { margin-left: 32px; }
+  }
 
   .head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .icon-btn {
@@ -260,6 +279,12 @@
       <span class="fmt-switch" id="fmtSwitch">
         <button class="fmt-btn" data-fmt="standard">标准128k</button><button class="fmt-btn" data-fmt="hq">HQ 320k</button><button class="fmt-btn active" data-fmt="sq">SQ无损</button><button class="fmt-btn" data-fmt="master">臻品母带</button>
       </span>
+    </span>
+    <span class="lyrics-options">
+      <label><input type="checkbox" id="lyricsEnabled"> 同时下载歌词</label>
+      <label>格式 <select id="lyricsFormat"><option value="txt">TXT纯文本</option><option value="lrc">LRC带时间轴</option></select></label>
+      <label><input type="checkbox" id="lyricsTranslation"> 翻译</label>
+      <label><input type="checkbox" id="lyricsRomanization"> 罗马音</label>
     </span>
   </div>
 
@@ -394,8 +419,30 @@ applyTheme(localStorage.getItem('theme') || 'dark');
 /* ---------------- 下载（保存到服务端 output/） ---------------- */
 let _lastInput = '';
 let _fmt = 'sq';  // 下载音质: standard | hq | sq | master
+let _lyricsEnabled = localStorage.getItem('lyricsEnabled') === '1';
+let _lyricsFormat = localStorage.getItem('lyricsFormat') || 'txt';
+let _lyricsTranslation = localStorage.getItem('lyricsTranslation') === '1';
+let _lyricsRomanization = localStorage.getItem('lyricsRomanization') === '1';
 
 const Q_NAMES = { standard: '标准128k', hq: 'HQ 320k', sq: 'SQ无损', master: '臻品母带' };
+const $lyricsEnabled = $('#lyricsEnabled');
+const $lyricsFormat = $('#lyricsFormat');
+const $lyricsTranslation = $('#lyricsTranslation');
+const $lyricsRomanization = $('#lyricsRomanization');
+$lyricsEnabled.checked = _lyricsEnabled;
+$lyricsFormat.value = _lyricsFormat;
+$lyricsTranslation.checked = _lyricsTranslation;
+$lyricsRomanization.checked = _lyricsRomanization;
+function saveLyricsOptions() {
+  localStorage.setItem('lyricsEnabled', _lyricsEnabled ? '1' : '0');
+  localStorage.setItem('lyricsFormat', _lyricsFormat);
+  localStorage.setItem('lyricsTranslation', _lyricsTranslation ? '1' : '0');
+  localStorage.setItem('lyricsRomanization', _lyricsRomanization ? '1' : '0');
+}
+$lyricsEnabled.onchange = () => { _lyricsEnabled = $lyricsEnabled.checked; saveLyricsOptions(); };
+$lyricsFormat.onchange = () => { _lyricsFormat = $lyricsFormat.value; saveLyricsOptions(); };
+$lyricsTranslation.onchange = () => { _lyricsTranslation = $lyricsTranslation.checked; saveLyricsOptions(); };
+$lyricsRomanization.onchange = () => { _lyricsRomanization = $lyricsRomanization.checked; saveLyricsOptions(); };
 
 document.querySelectorAll('.fmt-btn').forEach(btn => {
   btn.onclick = () => {
@@ -407,6 +454,21 @@ document.querySelectorAll('.fmt-btn').forEach(btn => {
 });
 
 function fmtParam() { return '&quality=' + _fmt; }
+function lyricParam() {
+  if (!_lyricsEnabled) return '';
+  return '&lyrics=1&lyrics_format=' + encodeURIComponent(_lyricsFormat) +
+    '&translation=' + (_lyricsTranslation ? '1' : '0') +
+    '&romanization=' + (_lyricsRomanization ? '1' : '0');
+}
+function lyricQuery(s) {
+  return `mid=${encodeURIComponent(s.mid)}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer || '')}` +
+    '&format=' + encodeURIComponent(_lyricsFormat) +
+    '&translation=' + (_lyricsTranslation ? '1' : '0') +
+    '&romanization=' + (_lyricsRomanization ? '1' : '0');
+}
+function qqDownloadUrl(s) {
+  return `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer)}${fmtParam()}${lyricParam()}`;
+}
 
 async function downloadToServer(url, opts) {
   const r = await fetch(url, opts);
@@ -449,7 +511,51 @@ async function downloadSong(btn, url) {
     btn.classList.add('done');
     btn.innerHTML = '✓ 已下载';
     const q = j.quality_name ? ` · ${j.quality_name}` : '';
-    toast(`已保存到下载文件夹: ${j.name}（${fmtSize(j.size)}${q}）`);
+    const lyric = j.lyrics_name ? `，歌词 ${j.lyrics_name}` : (j.lyrics_error ? `，歌词暂不可用` : '');
+    toast(`已保存到下载文件夹: ${j.name}（${fmtSize(j.size)}${q}）${lyric}`);
+    refreshFiles();
+  } catch (e) {
+    setBtnLoading(btn, false);
+    toast(e.message, true);
+  }
+}
+
+async function previewLyrics(btn, s) {
+  const wrap = btn.closest('.song-row-wrap');
+  const slot = wrap && wrap.querySelector('.lyric-preview-slot');
+  const existing = slot && slot.querySelector('.lyric-preview');
+  if (existing) {
+    existing.remove();
+    btn.textContent = '歌词预览';
+    return;
+  }
+  setBtnLoading(btn, true, '读取中');
+  try {
+    const j = await api('/api/lyrics?' + lyricQuery(s) + '&preview=1');
+    const parts = [];
+    const labels = [['lyric', '原文'], ['translation', '翻译'], ['romanization', '罗马音']];
+    labels.forEach(([key, label]) => {
+      if (j.sections && j.sections[key]) parts.push(`<div class="lyric-section-title">${label}</div><div>${esc(j.sections[key])}</div>`);
+    });
+    if (!parts.length) parts.push('<div>暂无歌词</div>');
+    const box = document.createElement('div');
+    box.className = 'lyric-preview';
+    box.innerHTML = parts.join('') + (j.truncated ? '<div style="color:var(--text2);margin-top:6px">预览已截断，可点击“仅歌词”保存完整内容</div>' : '');
+    if (slot) slot.appendChild(box);
+    setBtnLoading(btn, false);
+    btn.innerHTML = '收起歌词';
+  } catch (e) {
+    setBtnLoading(btn, false);
+    toast(e.message, true);
+  }
+}
+
+async function downloadLyrics(btn, s) {
+  setBtnLoading(btn, true, '保存中');
+  try {
+    const j = await downloadToServer('/api/lyrics/download?' + lyricQuery(s));
+    btn.classList.add('done'); btn.innerHTML = '✓ 歌词已保存';
+    toast(`歌词已保存: ${j.name}（${fmtSize(j.size)}）`);
     refreshFiles();
   } catch (e) {
     setBtnLoading(btn, false);
@@ -475,20 +581,30 @@ function renderSongs(songs, title, dlUrlFn) {
   const rows = songs.map((s, i) => {
     const isVip = s.pay_play == 1;
     return `
-    <div class="song">
-      <div class="idx">${i + 1}</div>
-      <div class="main">
-        <div class="name">${esc(s.name)}${isVip ? '<span class="tag vip">VIP</span>' : '<span class="tag free">免费</span>'}</div>
-        <div class="sub">${esc(s.singer)}${s.album ? ' · ' + esc(s.album) : ''}${s.duration ? ' · ' + fmtTime(s.duration) : ''}</div>
+    <div class="song-row-wrap" data-song-index="${i}">
+      <div class="song">
+        <div class="idx">${i + 1}</div>
+        <div class="main">
+          <div class="name">${esc(s.name)}${isVip ? '<span class="tag vip">VIP</span>' : '<span class="tag free">免费</span>'}</div>
+          <div class="sub">${esc(s.singer)}${s.album ? ' · ' + esc(s.album) : ''}${s.duration ? ' · ' + fmtTime(s.duration) : ''}</div>
+        </div>
+        <div class="song-actions">
+          <button type="button" class="btn lyric-preview-action" onclick="window._lyricPreview(this, ${i})">歌词预览</button>
+          <button type="button" class="btn lyric-download-action" onclick="window._lyricDownload(this, ${i})">仅歌词</button>
+          <button type="button" class="btn download-action" ${isVip ? `title="标记为VIP，登录Cookie有效时可直接下载" onclick="window._dlIdx(this, ${i})"` : `onclick="window._dlIdx(this, ${i})"`}>⬇ 下载</button>
+        </div>
       </div>
-      <button class="btn" ${isVip ? `title="标记为VIP，登录Cookie有效时可直接下载" onclick="window._dlIdx(this, ${i})"` : `onclick="window._dlIdx(this, ${i})"`}>⬇ 下载</button>
+      <div class="lyric-preview-slot"></div>
     </div>`;
   }).join('');
   result.innerHTML = `
     <div class="card">
       <div class="title-row">
         <div class="info"><h2>${esc(title)}</h2><div class="meta">共 ${songs.length} 首</div></div>
-        <button class="btn primary" id="dlAll">全部下载</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn" id="lyricAll">全部歌词</button>
+          <button class="btn primary" id="dlAll">全部下载</button>
+        </div>
       </div>
       <div class="progress-bar" id="pbar" style="display:none"><div class="fill" id="pfill"></div></div>
       <div class="progress-text" id="ptext" style="display:none"></div>
@@ -499,14 +615,32 @@ function renderSongs(songs, title, dlUrlFn) {
     const s = window._songs[i];
     const url = window._songsDlFn
       ? window._songsDlFn(s)
-      : `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer)}${fmtParam()}`;
+      : qqDownloadUrl(s);
     downloadSong(btn, url);
   };
+  window._lyricPreview = (btn, i) => previewLyrics(btn, window._songs[i]);
+  window._lyricDownload = (btn, i) => downloadLyrics(btn, window._songs[i]);
   $('#dlAll').onclick = () => downloadAll(songs, dlUrlFn);
+  $('#lyricAll').onclick = () => downloadAllLyrics(songs);
+}
+
+async function downloadAllLyrics(songs) {
+  const btn = $('#lyricAll');
+  if (btn) setBtnLoading(btn, true, '保存中');
+  let ok = 0, fail = 0;
+  for (let i = 0; i < songs.length; i++) {
+    try {
+      await downloadToServer('/api/lyrics/download?' + lyricQuery(songs[i]));
+      ok++;
+    } catch (e) { fail++; }
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '全部歌词'; }
+  toast(`歌词下载完成（成功 ${ok}${fail ? '，失败 ' + fail : ''}）`);
+  refreshFiles();
 }
 
 async function downloadAll(songs, dlUrlFn) {
-  const btns = result.querySelectorAll('.song .btn');
+  const btns = result.querySelectorAll('.download-action');
   const bar = $('#pbar'), fill = $('#pfill'), ptext = $('#ptext');
   bar.style.display = 'block'; ptext.style.display = 'block';
   let ok = 0, fail = 0;
@@ -518,7 +652,7 @@ async function downloadAll(songs, dlUrlFn) {
     if (btn.classList.contains('done')) { ok++; continue; }
     setBtnLoading(btn, true);
     try {
-      const url = dlUrlFn ? dlUrlFn(s) : `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer)}${fmtParam()}`;
+      const url = dlUrlFn ? dlUrlFn(s) : qqDownloadUrl(s);
       await downloadToServer(url);
       btn.classList.add('done'); btn.innerHTML = '✓ 已下载'; btn.disabled = false;
       ok++;
@@ -722,10 +856,12 @@ async function refreshFiles() {
       box.innerHTML = '<div class="empty">暂无文件<br>下载的文件会保存在这里</div>';
     } else {
       box.innerHTML = j.files.map(f => {
-        const canCv = /\.(m4a|flac|ogg|wav)$/i.test(f.name);
+        const isLyrics = /\.(txt|lrc)$/i.test(f.name);
+        const canCv = !isLyrics && /\.(m4a|flac|ogg|wav)$/i.test(f.name);
+        const icon = isLyrics ? '📝' : (f.name.match(/\.mp3$/i) ? '🎵' : (f.name.match(/\.flac$/i) ? '🎼' : '🎵'));
         return `
         <div class="file-row">
-          <span>${f.name.match(/\.mp3$/i) ? '🎵' : (f.name.match(/\.flac$/i) ? '🎼' : '🎵')}</span>
+          <span>${icon}</span>
           <div class="fname">${esc(f.name)}</div>
           <div class="fsize">${fmtSize(f.size)}</div>
           ${canCv ? `<button class="btn" style="padding:3px 9px;font-size:11.5px" onclick="window._cvFile(this, ${esc(JSON.stringify(f.name))})">转MP3</button>` : ''}
