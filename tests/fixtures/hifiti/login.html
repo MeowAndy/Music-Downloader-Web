@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<!-- Public unauthenticated GET excerpt; layout/assets/tracking omitted. Source: https://www.hifiti.com/user-login.htm. No authenticated response was recorded. -->
+<html lang="zh-cn"><head><meta charset="utf-8"/><title>用户登录</title></head><body>
+<header class="navbar navbar-expand-lg navbar-dark bg-dark" id="header">
+<div class="container">
+<button aria-controls="navbar_collapse" aria-expanded="false" aria-label="展开菜单" class="navbar-toggler" data-target="#nav" data-toggle="collapse" type="button">
+<span class="navbar-toggler-icon"></span>
+</button>
+<a class="navbar-brand text-truncate" href="./">
+
+</a>
+<a aria-label="登录" class="navbar-brand hidden-lg" href="user-login.htm"> <i class="icon-user icon"></i></a>
+<div class="collapse navbar-collapse" id="nav">
+<!-- 左侧：版块 -->
+<ul class="navbar-nav mr-auto">
+<li class="nav-item home" data-active="fid-0" fid="0"><a class="nav-link" href="."><i class="icon-home d-md-none"></i> 首页</a></li>
+<li class="nav-item" data-active="fid-1" fid="1">
+<a class="nav-link" href="forum-1.htm"><i class="icon-circle-o d-md-none"></i> 华语</a>
+</li>
+<li class="nav-item" data-active="fid-2" fid="2">
+<a class="nav-link" href="forum-2.htm"><i class="icon-circle-o d-md-none"></i> 日韩</a>
+</li>
+<li class="nav-item" data-active="fid-3" fid="3">
+<a class="nav-link" href="forum-3.htm"><i class="icon-circle-o d-md-none"></i> 欧美</a>
+</li>
+<li class="nav-item" data-active="fid-4" fid="4">
+<a class="nav-link" href="forum-4.htm"><i class="icon-circle-o d-md-none"></i> Remix</a>
+</li>
+<li class="nav-item" data-active="fid-5" fid="5">
+<a class="nav-link" href="forum-5.htm"><i class="icon-circle-o d-md-none"></i> 纯音乐</a>
+</li>
+<li class="nav-item" data-active="fid-8" fid="8">
+<a class="nav-link" href="forum-8.htm"><i class="icon-circle-o d-md-none"></i> MV</a>
+</li>
+<li class="nav-item" data-active="fid-6" fid="6">
+<a class="nav-link" href="forum-6.htm"><i class="icon-circle-o d-md-none"></i> 音友</a>
+</li>
+<li class="nav-item" data-active="fid-7" fid="7">
+<a class="nav-link" href="forum-7.htm"><i class="icon-circle-o d-md-none"></i> 互助</a>
+</li>
+<li class="nav-item" data-active="fid-9" fid="9">
+<a class="nav-link" href="forum-9.htm"><i class="icon-circle-o d-md-none"></i> 站务</a>
+</li>
+</ul>
+<!-- 右侧：用户 -->
+<ul class="navbar-nav">
+<li class="nav-item hidden-lg">
+<a class="nav-link" href="search.htm"><i class="icon-search"></i> 搜索</a>
+</li> <li class="nav-item hidden-lg"><a class="nav-link" href="#" id="sg_sign_mobile"><i class="icon-gift"></i> 签到</a></li>
+<li class="nav-item"><a class="nav-link" href="user-login.htm"><i class="icon-user"></i> 登录</a></li>
+<li class="nav-item"><a class="nav-link" href="user-create.htm"><i class="icon-plus"></i> 注册</a></li>
+</ul>
+</div>
+</div>
+</header>
+<form action="user-login.htm" id="form" method="post">
+<div class="form-group input-group">
+<div class="input-group-prepend">
+<span class="input-group-text"><i class="icon icon-user icon-fw"></i></span>
+</div>
+<input class="form-control" id="email" name="email" placeholder="邮箱 / 用户名" type="text"/>
+<div class="invalid-feedback"></div>
+</div>
+<div class="form-group input-group">
+<div class="input-group-prepend">
+<span class="input-group-text"><i class="icon icon-lock icon-fw"></i></span>
+</div>
+<input class="form-control" id="password" name="password" placeholder="密码" type="password"/>
+<div class="invalid-feedback"></div>
+</div>
+<div class="form-group">
+<button class="btn btn-primary btn-block" data-loading-text="正在提交..." id="submit" type="submit">登录</button>
+</div>
+<div class="media">
+<div>
+</div>
+<div class="media-body text-right">
+<a class="text-muted" href="user-create.htm"><small>用户注册</small></a>
+<a class="text-muted ml-3" href="user-resetpw.htm"><small>忘记密码</small></a>
+</div>
+</div>
+</form>
+<script>
+var jform = $('#form');
+var jsubmit = $('#submit');
+var jemail = $('#email');
+var jpassword = $('#password');
+var referer = './';
+jform.on('submit', function() {
+	jform.reset();
+	jsubmit.button('loading');
+	var postdata = jform.serializeObject();
+	postdata.password = $.md5(postdata.password);
+	$.xpost(jform.attr('action'), postdata, function(code, message) {
+		if(code == 0) {
+			jsubmit.button(message).delay(1000).location(referer);
+		} else if(xn.is_number(code)) {
+			alert(message);
+			jsubmit.button('reset');
+		} else {
+			jform.find('[name="'+code+'"]').alert(message).focus();
+			jsubmit.button('reset');
+		}
+		/*
+		if(code == 0) {
+			jsubmit.button(message).delay(1000).location(referer);
+		} else if(code == 'email') {
+			jemail.alert(message).focus();
+			jsubmit.button('reset');
+		} else if(code == 'password') {
+			jpassword.alert(message).focus();
+			jsubmit.button('reset');
+		} else {
+			alert(message);
+			jsubmit.button('reset');
+		}*/
+	});
+	return false;
+});
+
+</script>
+<script>var uid = 0; var gid = 0; var url_rewrite_on = 1;</script>
+</body></html>

@@ -81,8 +81,18 @@ def _post_musicu(body, timeout=12):
     return r.json()
 
 
+class SearchError(RuntimeError):
+    def __init__(self, message, code='SEARCH_FAILED'):
+        super().__init__(message)
+        self.code = code
+
+
 def search(keyword, num=30, page=1):
-    """在 QQ音乐乐库搜索歌曲，接口偶尔返回空结果，自动重试"""
+    """搜索 QQ音乐，区分登录、平台拒绝和真正的空结果。"""
+    if not get_cookie():
+        raise SearchError('请先点击「登录设置」，使用你自己的 QQ音乐 App 扫码登录后再搜索。',
+                          'LOGIN_REQUIRED')
+    _apply_cookie()
     body = {
         'comm': {'uin': 0, 'format': 'json', 'ct': 24, 'cv': 0},
         'req_1': {
@@ -95,7 +105,15 @@ def search(keyword, num=30, page=1):
     for i in range(3):
         try:
             j = _post_musicu(body)
-            songs = j['req_1']['data']['body']['song']['list']
+            node = j.get('req_1') or {}
+            codes = (j.get('code', 0), node.get('code', 0))
+            if any(code != 0 for code in codes):
+                raise SearchError('QQ音乐拒绝了搜索请求（接口代码 %s/%s）。请重新扫码登录；'
+                                  '若仍失败，请检查网络或稍后重试。' % codes,
+                                  'SEARCH_REJECTED')
+            songs = node['data']['body']['song']['list']
+            if not isinstance(songs, list):
+                raise SearchError('QQ音乐返回的搜索数据格式异常，请稍后重试。', 'SEARCH_RESPONSE_INVALID')
             if songs:
                 out = []
                 for s in songs:
@@ -112,14 +130,14 @@ def search(keyword, num=30, page=1):
                 return out
             # 接口偶尔返回空列表，间隔后重试
             time.sleep(0.6 + 0.4 * i)
+        except SearchError:
+            raise
         except Exception as e:  # 网络/解析错误，重试
             last_err = e
             time.sleep(0.8)
     if last_err:
-        raise RuntimeError('搜索失败: %s' % last_err)
-    if not get_cookie():
-        raise RuntimeError('QQ音乐搜索现在需要登录。请点击右上角「登录设置」，'
-                           '粘贴网页版 y.qq.com 登录后的 Cookie')
+        raise SearchError('搜索服务连接失败或响应异常，请检查网络后重试（%s）。' %
+                          type(last_err).__name__)
     return []
 
 

@@ -1,0 +1,13 @@
+# Third-party components in the Windows distribution
+
+This notice does not relicense the application or third-party code. Each component remains subject to its own license. Do not redistribute account state, downloaded music, caches or logs.
+
+- **Node.js v24.19.0**: https://nodejs.org/ ; source https://github.com/nodejs/node/tree/v24.19.0 . `node-LICENSE.txt` includes Node and bundled dependency notices. Embedded at `bin/node.exe`.
+- **FFmpeg 7.1 essentials, Gyan build**: https://www.gyan.dev/ffmpeg/builds/ ; source https://github.com/FFmpeg/FFmpeg/tree/n7.1 and build/source information https://github.com/GyanD/codexffmpeg . The bundled build reports `--enable-gpl --enable-version3`; see `ffmpeg-GPLv3.txt`. Executed as an independent subprocess at `bin/ffmpeg.exe`; do not represent it as proprietary application code. Corresponding FFmpeg source archive: https://ffmpeg.org/releases/ffmpeg-7.1.tar.xz . Build configuration is emitted by `ffmpeg -version`.
+- **ncmdump 1.5.1**, Copyright Taurus Xin, MIT: https://github.com/taurusxin/ncmdump/tree/1.5.1 . Official Windows archive https://github.com/taurusxin/ncmdump/releases/download/1.5.1/ncmdump-1.5.1-windows-amd64.zip . The unchanged `ncmdump.exe` is renamed `ncm转mp3.exe`, SHA-256 `a1f6f6ce87500b7b1f2a89dbf85b13e81d327eea4641daf8afe0ab840f2c518c`. See `ncmdump-MIT.txt`; upstream lists TagLib and its other dependencies. Only used on an actual permitted NCM download and never to bypass account permissions.
+- **api-enhanced 4.41.1**, MIT: pinned commit `2db6684453297ee86dec0492842f2320b08182d9`; https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced . License, pinned metadata, lockfile and dependency licenses are preserved in `vendor/netease/` inside the EXE and Git repository. Only selected modules are exposed by the application bridge.
+- **Unlock Music**: https://git.unlock-music.dev/um/web . Existing browser worker/WASM integration in `vendor/um/`; original component rights remain with its authors.
+- **Python runtime and packages**: Python, Flask, Werkzeug, Requests, Paho MQTT, BeautifulSoup4, Pillow, py7zr and transitive dependencies retain their upstream licenses. PyInstaller includes package metadata collected by its hooks. PyInstaller's bootloader exception permits distribution of bundled applications.
+- **vocal-separate**: https://github.com/jianchang512/vocal-separate . The optional AI engine/model bundle is **not embedded or redistributed in this EXE**; it is separately downloaded on the user's explicit request and remains subject to upstream licensing and model requirements.
+
+The project does not claim copyright in third-party music, lyrics, forum content or netdisk resources. Account permissions, copyright and platform terms still apply.

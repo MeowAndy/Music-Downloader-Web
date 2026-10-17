@@ -41,7 +41,7 @@
     min-height: 100vh;
     transition: background .3s, color .3s;
   }
-  .container { max-width: 1440px; margin: 0 auto; padding: 20px 16px 60px; }
+  .container { max-width: 1800px; margin: 0 auto; padding: 20px 16px 60px; }
 
   header { text-align: center; padding: 20px 0 6px; }
   header h1 {
@@ -72,25 +72,26 @@
     padding: 1px 6px; font-size: 11px; color: var(--accent);
   }
 
-  /* ---------- 三栏布局 ---------- */
+  /* ---------- 工作区布局 ---------- */
   .layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, .9fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 14px;
     align-items: start;
   }
-  @media (max-width: 1080px) {
-    .layout { grid-template-columns: 1fr; }
+  @media (max-width: 1199px) {
+    .layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
   }
   .panel {
     background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
-    overflow: hidden; display: flex; flex-direction: column;
+    overflow: hidden; display: flex; flex-direction: column; min-width: 0;
     max-height: calc(100vh - 210px); min-height: 320px;
   }
-  .col-mid {
-    height: calc(100vh - 210px); min-height: 580px;
-  }
-  .col-mid .panel { max-height: none; }
+  #vocalFile, #vocalModel { min-width: 0; }
+  #vipFolder { overflow-wrap: anywhere; }
   #vocalResults audio { width: 100%; height: 32px; margin-top: 4px; }
   .panel-head {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -198,6 +199,34 @@
     font-size: 11.5px; cursor: pointer; transition: all .2s;
   }
   .fmt-btn.active { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .fmt-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .source-picker { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--text2); }
+  .source-btn.active { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+  #neteaseHint { display: none; }
+  .forum-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:12px 0; }
+  .forum-toolbar input:not([type="checkbox"]), .forum-toolbar select { background:var(--bg3); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px; max-width:100%; }
+  .forum-account { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .forum-account h2 { font-size:17px; margin-bottom:5px; }
+  .forum-account .forum-toolbar { margin:0; }
+  .forum-account #otherLoginStatus { max-width:720px; }
+  .forum-help { margin:12px 0; color:var(--text2); font-size:12.5px; line-height:1.8; }
+  .forum-help summary, .forum-full-text summary { cursor:pointer; padding:8px 0; color:var(--text); font-weight:600; }
+  .forum-help .note { margin:6px 0; }
+  .forum-search-options { padding:10px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:9px; gap:10px 18px; }
+  .forum-search-options label { display:inline-flex; align-items:center; gap:8px; font-size:13px; }
+  .forum-search-options input[type="checkbox"] { accent-color:var(--accent); }
+  .forum-search-options select { background:var(--bg2); }
+  .forum-full-text { border-top:1px solid var(--border); margin:12px 0; }
+  .forum-row { padding:14px 4px; border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
+  .forum-title { background:none; border:0; color:var(--accent); font:inherit; text-align:left; cursor:pointer; padding:4px 0; }
+  .forum-meta { color:var(--text2); font-size:12px; line-height:1.8; }
+  .forum-tags .tag { margin:4px 6px 4px 0; border:1px solid var(--border); color:var(--text2); }
+  #otherThreadText { white-space:pre-wrap; overflow-wrap:anywhere; max-height:60vh; overflow:auto; line-height:1.8; font-size:13px; }
+  #otherThreadLinks a { display:block; overflow-wrap:anywhere; margin:8px 0; color:var(--accent); }
+  .forum-resource { border:1px solid var(--border); border-radius:8px; padding:12px; margin:12px 0; overflow-wrap:anywhere; }
+  .forum-resource-code, #otherCopyText { white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; }
+  #otherCopyText { border:1px solid var(--border); border-radius:6px; padding:12px; font:inherit; }
+  [hidden] { display: none !important; }
   .lyrics-options { display: flex; align-items: center; justify-content: center; gap: 6px 10px; flex-wrap: wrap; margin: 8px auto 0; color: var(--text2); font-size: 12px; }
   .lyrics-options label { display: inline-flex; align-items: center; gap: 3px; }
   .lyrics-options select { background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; font-size: 11.5px; max-width: 100%; }
@@ -225,6 +254,25 @@
   }
   .icon-btn:hover { border-color: var(--accent); }
 
+  .other-login-overlay { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto; background:rgba(0,0,0,.65); }
+  .other-login-card { width:100%; max-width:480px; max-height:calc(100dvh - 40px); overflow-y:auto; background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:24px; box-shadow:0 20px 70px var(--shadow); }
+  .other-login-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .other-login-heading h2 { font-size:20px; margin-bottom:6px; }
+  .other-login-heading p, .other-login-intro { color:var(--text2); font-size:13px; line-height:1.7; }
+  .other-login-tabs { display:flex; gap:6px; padding:4px; background:var(--bg3); border-radius:9px; margin:18px 0 14px; }
+  .other-login-tabs button { flex:1; border-color:transparent; background:transparent; }
+  .other-login-tabs button[aria-selected="true"] { color:var(--accent); background:var(--bg2); border-color:var(--border); font-weight:600; }
+  .other-login-steps { padding-left:20px; margin:10px 0 16px; color:var(--text2); font-size:12.5px; line-height:1.9; }
+  .other-account-form { display:flex; flex-direction:column; gap:14px; }
+  .other-account-form label { display:flex; flex-direction:column; gap:7px; font-size:13px; font-weight:600; }
+  .other-account-form input { width:100%; min-width:0; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:11px 12px; font:inherit; }
+  .other-account-form input:focus { outline:2px solid var(--accent); outline-offset:2px; }
+  .other-account-form .btn.primary { padding:11px; }
+  .other-login-privacy { margin-top:16px; color:var(--text2); font-size:12px; line-height:1.8; }
+  .other-login-privacy a { color:var(--accent); }
+  #otherLoginMessage, #otherRegisterMessage { margin-top:12px; }
+  .other-login-card :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+  @media (max-width:560px) { .other-login-overlay { padding:12px; } .other-login-card { padding:18px; max-height:calc(100dvh - 24px); } }
   .card#loginPanel { margin-bottom: 14px; }
   .qr-login { display: flex; align-items: center; gap: 18px; margin-top: 12px; }
   .qr-login img { width: 168px; height: 168px; padding: 8px; background: #fff; border-radius: 10px; object-fit: contain; }
@@ -239,9 +287,12 @@
 <div class="container">
   <header>
     <h1>♪ Music Downloader Web</h1>
-    <p>QQ音乐 + 全民K歌 · 在线搜索与下载</p>
+    <p>QQ音乐 + 网易云音乐 + 全民K歌 · 在线搜索与下载</p>
     <div class="head-actions" style="justify-content:center;margin-top:10px">
-      <button class="icon-btn" id="loginBtn">🔑 登录设置</button>
+      <button class="icon-btn" id="loginBtn">QQ音乐登录</button>
+      <button class="icon-btn" id="neteaseLoginBtn">网易云登录</button>
+      <button class="icon-btn" id="miguLoginBtn">咪咕登录</button>
+      <button class="icon-btn" id="otherLoginBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="otherLoginPanel">HiFiTi 登录 / 注册</button>
       <button class="icon-btn" id="themeBtn">🌙 夜间</button>
     </div>
   </header>
@@ -268,14 +319,67 @@
     </div>
   </div>
 
+  <div class="card" id="neteaseLoginPanel" style="display:none">
+    <div class="title-row">
+      <div class="info">
+        <h2>网易云音乐扫码登录</h2>
+        <div class="meta">使用网易云音乐 App 扫码确认，与 QQ音乐登录独立。匿名可搜索；下载取决于账号权益、版权及可用音质，登录不保证可下载。</div>
+      </div>
+    </div>
+    <div class="qr-login">
+      <img id="neteaseLoginQr" alt="网易云音乐登录二维码" style="display:none">
+      <div class="qr-copy">
+        <div id="neteaseCookieStatus" aria-live="polite">正在检查登录状态…</div>
+        <div id="neteaseQrHint" style="margin-top:5px" aria-live="polite">点击重新扫码获取二维码</div>
+        <div id="neteaseQrCountdown" style="margin-top:4px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" id="neteaseQrRefresh">重新扫码</button>
+          <button class="btn" id="neteaseLogout">退出网易云登录</button>
+          <button class="btn" id="neteaseQrCancel">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="miguLoginPanel" style="display:none">
+    <div class="title-row"><div class="info">
+      <h2>咪咕音乐扫码登录</h2>
+      <div class="meta">请使用自己的咪咕官方客户端 扫码并在手机确认，与 QQ / 网易云登录独立。账号仅保存在服务进程内存，重启后需重新扫码；登录不保证所有歌曲可下载，仍须相应权益及版权许可。</div>
+    </div></div>
+    <div class="qr-login">
+      <img id="miguLoginQr" alt="咪咕音乐登录二维码" style="display:none">
+      <div class="qr-copy">
+        <div id="miguCookieStatus" aria-live="polite">尚未检查登录状态</div>
+        <div id="miguQrHint" aria-live="polite" style="margin-top:5px">点击重新扫码获取二维码</div>
+        <div id="miguQrCountdown" style="margin-top:4px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" id="miguQrRefresh">重新扫码</button>
+          <button class="btn" id="miguStatusRefresh">刷新登录状态</button>
+          <button class="btn" id="miguLogout">退出咪咕登录</button>
+          <button class="btn" id="miguQrCancel">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="source-picker" role="group" aria-label="搜索平台">
+    <span>搜索平台</span>
+    <button class="btn source-btn active" data-source="qq" aria-pressed="true">QQ音乐 / 全民K歌</button>
+    <button class="btn source-btn" data-source="netease" aria-pressed="false">网易云音乐</button>
+    <button class="btn source-btn" data-source="migu" aria-pressed="false">咪咕音乐</button>
+    <button class="btn source-btn" data-source="other" aria-pressed="false">HiFiTi渠道</button>
+  </div>
   <div class="search-box">
     <input id="input" type="text" placeholder="输入歌名/歌手搜索，或粘贴 全民K歌/QQ音乐歌单 链接" autofocus>
     <button id="goBtn">开 始</button>
   </div>
   <div class="hint">
-    输入关键词在 QQ音乐乐库搜索 · 粘贴
-    <kbd>全民K歌作品/主页链接</kbd> 或 <kbd>QQ音乐歌单链接</kbd> 解析下载
-    <span style="margin-left:10px">下载音质：
+    <span id="qqHint">输入关键词在 QQ音乐乐库搜索 · 粘贴
+    <kbd>全民K歌作品/主页链接</kbd> 或 <kbd>QQ音乐歌单链接</kbd> 解析下载</span>
+    <span id="neteaseHint">网易云支持匿名关键词搜索（不解析链接），标准 / HQ / SQ 对应 128k / 320k / 无损。下载须有账号权益及版权许可；登录不保证可下载。支持歌词预览、TXT / LRC、翻译、罗马音、仅歌词及随音频保存；暂无歌词时不影响音频下载，暂不支持母带。</span>
+    <span id="miguHint" style="display:none" aria-live="polite"></span>
+    <span id="otherHint" style="display:none">HiFiTi渠道 论坛原生搜索，保留官网结果顺序与标题；公开内容可直接搜索，登录独立于音乐平台。</span>
+    <span id="audioOptions" style="margin-left:10px">下载音质：
       <span class="fmt-switch" id="fmtSwitch">
         <button class="fmt-btn" data-fmt="standard">标准128k</button><button class="fmt-btn" data-fmt="hq">HQ 320k</button><button class="fmt-btn active" data-fmt="sq">SQ无损</button><button class="fmt-btn" data-fmt="master">臻品母带</button>
       </span>
@@ -288,66 +392,79 @@
     </span>
   </div>
 
+  <section class="card" id="otherPanel" hidden aria-label="HiFiTi 论坛搜索">
+    <div class="forum-account">
+      <div>
+        <h2>HiFiTi渠道</h2>
+        <p id="otherLoginStatus" class="forum-meta" aria-live="polite">尚未检查登录状态（不影响公开搜索）</p>
+      </div>
+      <div class="forum-toolbar">
+        <button class="btn primary" id="otherLogin" aria-haspopup="dialog" aria-expanded="false" aria-controls="otherLoginPanel">登录 / 注册</button>
+        <button class="btn" id="otherStatusRefresh">刷新登录状态</button>
+        <button class="btn" id="otherLogout">退出 HiFiTi 登录</button>
+      </div>
+    </div>
+    <details class="forum-help">
+      <summary>使用说明与账号隐私 · 公开搜索无需登录</summary>
+      <p class="note">本页通过本地服务搜索和读取 HiFiTi 论坛，不属于音乐平台下载 API。公开搜索无需先登录，内容及资源权限由官网决定。不会自动关注、扣积分、购买或回复，也不会绕过验证码或权限限制。</p>
+      <p class="note">论坛资源常为外部网盘链接；HiFiTi 登录不会自动登录 QQ、咪咕、网易云或网盘。仅获取有权使用的资源，外部下载不会自动出现在本应用“已下载文件”列表。</p>
+      <p class="note">官网浏览器登录与本应用后端会话相互独立：在官网完成登录不会让本地服务自动获得账号权限。要读取账号可见内容，请在本应用 HiFiTi 登录面板主动登录，再点击“重新读取帖子”。账号密码仅在本应用登录面板或 HiFiTi 官方登录页输入，不向网盘或其他站点提交 HiFiTi 凭据。</p>
+    </details>
+    <div class="forum-toolbar forum-search-options" role="group" aria-label="HiFiTi 搜索选项">
+      <label>搜索范围 <select id="otherScope"><option value="title" selected>标题</option><option value="post">帖子内容</option></select></label>
+      <label><input id="otherExact" type="checkbox"> 精确搜索</label>
+      <span class="forum-meta">修改选项后，点击上方“开始”搜索。</span>
+    </div>
+    <p id="otherStatus" class="forum-meta" aria-live="polite">上方输入关键词并点击开始；切换渠道不会自动提交关键词。</p>
+    <div id="otherResults" role="list" aria-label="HiFiTi 搜索结果"></div>
+    <nav id="otherPagination" class="forum-toolbar" aria-label="HiFiTi 搜索分页" hidden>
+      <button class="btn" id="otherPrev" disabled>上一页</button>
+      <span id="otherPageInfo" class="forum-meta"></span>
+      <button class="btn" id="otherNext" disabled>下一页</button>
+    </nav>
+    <section class="card" id="otherThread" hidden aria-labelledby="otherThreadTitle" aria-busy="false">
+      <div class="forum-toolbar"><h3 id="otherThreadTitle">帖子详情</h3><button class="btn" id="otherThreadReload" disabled>重新读取帖子</button><button class="btn" id="otherThreadClose">关闭详情</button></div>
+      <p id="otherThreadNotice" class="note" aria-live="polite"></p>
+      <div id="otherThreadLinks" aria-label="外部资源链接"></div>
+      <p id="otherCopyStatus" class="forum-meta" aria-live="polite"></p>
+      <pre id="otherCopyText" tabindex="0" aria-label="请手动选择复制的资源文本" hidden></pre>
+      <details id="otherThreadFullText" class="forum-full-text">
+        <summary>展开帖子全文 / 核对资源说明</summary>
+        <div id="otherThreadText"></div>
+      </details>
+      <a id="otherThreadOfficial" target="_blank" rel="noopener noreferrer" hidden>可选：在官网打开此帖</a>
+    </section>
+    <div class="forum-toolbar">
+      <a class="btn" id="otherOpenLogin" href="https://www.hifiti.com/user-login.htm" target="_blank" rel="noopener noreferrer">可选：前往官网登录 / 验证</a>
+      <a class="btn" id="otherOpenSearch" href="https://www.hifiti.com/" target="_blank" rel="noopener noreferrer">可选：在官网打开当前搜索</a>
+    </div>
+  </section>
+
   <div class="layout">
     <!-- 左栏：搜索/解析结果 -->
-    <section class="panel">
+    <section class="panel" id="musicResultsPanel">
       <div class="panel-head"><h2>🔍 搜索结果</h2><span id="resultCount" style="color:var(--text2);font-size:12px"></span></div>
       <div class="panel-body" id="result">
         <div class="empty">输入关键词开始搜索<br>或粘贴 K歌/歌单 链接解析</div>
       </div>
     </section>
 
-    <!-- 中栏：mflac 转换 + 人声分离 -->
-    <div class="col-mid" style="display:flex;flex-direction:column;gap:14px;min-width:0">
-      <section class="panel" style="max-height:none;flex:1 1 340px">
-        <div class="panel-head">
-          <h2>🔓 mflac 转换</h2>
-          <button class="btn" id="vipRefresh" style="padding:4px 10px;font-size:12px">刷新</button>
-          <button class="btn" id="vipSetFolder" style="padding:4px 10px;font-size:12px">目录</button>
-        </div>
-        <div class="panel-body">
-          <div class="note">付费歌曲可直接在左侧搜索下载（走登录Cookie）。此栏转换客户端下载的 .mflac 文件。<br>目录：<b id="vipFolder">-</b> <span id="vipFolderState" style="color:var(--danger)"></span></div>
-          <div class="list" id="vipFiles"></div>
-          <div id="vipHistory"></div>
-        </div>
-      </section>
+    <!-- mflac 转换 -->
+    <section class="panel" id="conversionPanel">
+      <div class="panel-head">
+        <h2>🔓 mflac 转换</h2>
+        <button class="btn" id="vipRefresh" style="padding:4px 10px;font-size:12px">刷新</button>
+        <button class="btn" id="vipSetFolder" style="padding:4px 10px;font-size:12px">目录</button>
+      </div>
+      <div class="panel-body">
+        <div class="note">付费歌曲可直接在左侧搜索下载（走登录Cookie）。此栏转换客户端下载的 .mflac 文件。<br>目录：<b id="vipFolder">-</b> <span id="vipFolderState" style="color:var(--danger)"></span></div>
+        <div class="list" id="vipFiles"></div>
+        <div id="vipHistory"></div>
+      </div>
+    </section>
 
-      <section class="panel" style="max-height:none;flex:3 1 480px">
-        <div class="panel-head">
-          <h2>🎤 人声分离</h2>
-          <span class="tag free" id="vocalState">本地AI</span>
-        </div>
-        <div class="panel-body" id="vocalBody">
-          <div class="note">本地 AI 模型分离人声/伴奏，结果自动保存到下载文件夹。中文歌曲建议 2stems。</div>
-          <div id="vocalInputs" style="padding:2px 4px 8px">
-            <select id="vocalFile" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none">
-              <option value="">— 选择已下载的音频文件 —</option>
-            </select>
-            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-              <select id="vocalModel" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12.5px;outline:none">
-                <option value="2stems">2stems · 人声+伴奏</option>
-                <option value="4stems">4stems · +鼓+贝斯</option>
-                <option value="5stems">5stems · +钢琴</option>
-              </select>
-              <button class="btn primary" id="vocalGo">开始分离</button>
-            </div>
-            <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-              <button class="btn" id="vocalUploadBtn" style="flex:1">📤 上传本地文件分离</button>
-              <input type="file" id="vocalUpload" accept=".mp3,.wav,.flac,.mp4,.m4a,.avi,.mkv,.mov,.mpeg" style="display:none">
-            </div>
-            <div style="margin-top:6px;color:var(--text2);font-size:11.5px;text-align:center">选择上方列表或上传本地文件，二选一</div>
-          </div>
-          <div id="vocalProgress" style="display:none;padding:10px">
-            <div class="progress-bar"><div class="fill" style="width:50%;animation:pulse 1.5s infinite"></div></div>
-            <div class="progress-text" id="vocalProgressText">分离中…（约10秒-几分钟，取决于歌曲长度）</div>
-          </div>
-          <div id="vocalResults"></div>
-        </div>
-      </section>
-    </div>
-
-    <!-- 右栏：已下载文件 -->
-    <section class="panel">
+    <!-- 已下载文件 -->
+    <section class="panel" id="downloadedFilesPanel">
       <div class="panel-head">
         <h2>📥 已下载文件</h2>
         <button class="btn" id="openFolderBtn" style="padding:4px 10px;font-size:12px">📂 打开</button>
@@ -355,6 +472,41 @@
       </div>
       <div class="panel-body" id="files">
         <div class="empty">暂无文件</div>
+      </div>
+    </section>
+
+    <!-- 人声分离 -->
+    <section class="panel" id="vocalPanel">
+      <div class="panel-head">
+        <h2>🎤 人声分离</h2>
+        <span class="tag free" id="vocalState">本地AI</span>
+      </div>
+      <div class="panel-body" id="vocalBody">
+        <div class="note">本地 AI 模型分离人声/伴奏，结果自动保存到下载文件夹。中文歌曲建议 2stems。</div>
+        <div id="vocalSetupStatus" style="display:none;padding:10px 4px" aria-live="polite"></div>
+        <div id="vocalInputs" style="padding:2px 4px 8px">
+          <select id="vocalFile" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none">
+            <option value="">— 选择已下载的音频文件 —</option>
+          </select>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <select id="vocalModel" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12.5px;outline:none">
+              <option value="2stems">2stems · 人声+伴奏</option>
+              <option value="4stems">4stems · +鼓+贝斯</option>
+              <option value="5stems">5stems · +钢琴</option>
+            </select>
+            <button class="btn primary" id="vocalGo">开始分离</button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+            <button class="btn" id="vocalUploadBtn" style="flex:1">📤 上传本地文件分离</button>
+            <input type="file" id="vocalUpload" accept=".mp3,.wav,.flac,.mp4,.m4a,.avi,.mkv,.mov,.mpeg" style="display:none">
+          </div>
+          <div style="margin-top:6px;color:var(--text2);font-size:11.5px;text-align:center">选择上方列表或上传本地文件，二选一</div>
+        </div>
+        <div id="vocalProgress" style="display:none;padding:10px">
+          <div class="progress-bar"><div class="fill" style="width:50%;animation:pulse 1.5s infinite"></div></div>
+          <div class="progress-text" id="vocalProgressText">分离中…（约10秒-几分钟，取决于歌曲长度）</div>
+        </div>
+        <div id="vocalResults"></div>
       </div>
     </section>
   </div>
@@ -366,6 +518,39 @@
   </footer>
 </div>
 <div class="toast" id="toast"></div>
+<div id="otherLoginPanel" class="other-login-overlay" role="dialog" aria-modal="true" aria-labelledby="otherLoginTitle" aria-describedby="otherLoginPrivacy" tabindex="-1" hidden>
+  <div class="other-login-card">
+    <div class="other-login-heading">
+      <div><h2 id="otherLoginTitle">HiFiTi 账号</h2><p>在本应用登录，读取账号可见的论坛内容。</p></div>
+      <button class="btn" id="otherLoginClose" type="button" aria-label="关闭 HiFiTi 登录并清空密码">关闭</button>
+    </div>
+    <div class="other-login-tabs" role="tablist" aria-label="HiFiTi 账号操作">
+      <button class="btn" id="otherLoginTab" role="tab" type="button" aria-selected="true" aria-controls="otherLoginTabPanel" tabindex="0">账号登录</button>
+      <button class="btn" id="otherRegisterTab" role="tab" type="button" aria-selected="false" aria-controls="otherRegisterTabPanel" tabindex="-1">注册账号</button>
+    </div>
+    <section id="otherLoginTabPanel" role="tabpanel" aria-labelledby="otherLoginTab">
+      <ol class="other-login-steps"><li>输入你自己的 HiFiTi 账号和密码。</li><li>点击“提交登录”，成功后重新搜索或读取帖子。</li></ol>
+      <form id="otherLoginForm" class="other-account-form" novalidate>
+        <label for="otherUsername">HiFiTi 账号<input id="otherUsername" name="username" type="text" autocomplete="username" placeholder="输入账号" required></label>
+        <label for="otherPassword">密码<input id="otherPassword" name="password" type="password" autocomplete="current-password" placeholder="输入账号密码" required></label>
+        <button class="btn primary" id="otherLoginSubmit" type="submit">提交登录</button>
+      </form>
+      <p id="otherLoginMessage" class="forum-meta" role="status" aria-live="polite">不会自动提交登录。需要验证码或安全检查时，请前往官网完成；不尝试绕过。</p>
+    </section>
+    <section id="otherRegisterTabPanel" role="tabpanel" aria-labelledby="otherRegisterTab" hidden>
+      <p class="other-login-intro">填写以下信息创建 HiFiTi 账号。提交后可能创建账号，关闭仅关闭窗口；若需邮箱激活，请按官网要求完成后再登录。</p>
+      <form id="otherRegisterForm" class="other-account-form" novalidate style="margin-top:14px">
+        <label for="otherRegisterEmail">邮箱<input id="otherRegisterEmail" name="email" type="email" autocomplete="email" placeholder="用于注册的邮箱" required></label>
+        <label for="otherRegisterUsername">用户名<input id="otherRegisterUsername" name="username" type="text" autocomplete="username" placeholder="设置用户名" required></label>
+        <label for="otherRegisterPassword">密码<input id="otherRegisterPassword" name="password" type="password" autocomplete="new-password" placeholder="设置密码" required></label>
+        <label for="otherRegisterConfirm">确认密码<input id="otherRegisterConfirm" name="confirm" type="password" autocomplete="new-password" placeholder="再次输入密码" required></label>
+        <button class="btn primary" id="otherRegisterSubmit" type="submit" aria-describedby="otherRegisterMessage">提交注册</button>
+      </form>
+      <p id="otherRegisterMessage" class="forum-meta" role="status" aria-live="polite">请填写邮箱、用户名及密码后主动提交。提交后可能创建账号，关闭仅关闭窗口；需要验证时不自动重试。</p>
+    </section>
+    <p class="other-login-privacy" id="otherLoginPrivacy">仅使用自己的账号。登录信息经本地服务仅提交至 https://www.hifiti.com 官方登录，注册信息仅提交至该官网注册接口；密码在提交、切换标签或关闭时清空，不写入本地存储。会话仅保存在服务进程内存，服务重启后需重新登录。<br><a href="https://www.hifiti.com/user-login.htm" target="_blank" rel="noopener noreferrer">可选：前往官网登录 / 验证</a>（官网会话不会自动同步到本应用）</p>
+  </div>
+</div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -387,8 +572,9 @@ function fmtSize(n) {
   return n + ' B';
 }
 function fmtTime(s) {
-  if (!s) return '';
-  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const seconds = Math.floor(Number(s));
+  if (!Number.isFinite(seconds) || seconds <= 0) return '';
+  return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
 }
 function esc(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -397,7 +583,11 @@ function esc(s) {
 async function api(url, opts) {
   const r = await fetch(url, opts);
   const j = await r.json().catch(() => ({ok: false, error: '响应解析失败'}));
-  if (!r.ok || !j.ok) throw new Error(j.error || ('请求失败 ' + r.status));
+  if (!r.ok || !j.ok) {
+    const error = new Error(j.error || j.message || ('请求失败 ' + r.status));
+    error.code = j.code;
+    throw error;
+  }
   return j;
 }
 
@@ -417,10 +607,604 @@ $('#themeBtn').onclick = () => {
 applyTheme(localStorage.getItem('theme') || 'dark');
 
 /* ---------------- 下载（保存到服务端 output/） ---------------- */
-let _lastInput = '';
+let _source = 'qq';
+let _searchGeneration = 0;
+let _platformGeneration = 0;
+let _batchBusy = false;
+// Explicit routing: an unknown source must never silently use QQ endpoints.
+const PROVIDERS = {
+  qq: { name: 'QQ音乐', search: '/api/search?kw=', lyrics: '/api/lyrics', identity: 'mid', download: qqDownloadUrl, master: true, translation: true, romanization: true, capabilities: { search: true, download: true, lyrics: true, login: true } },
+  netease: { name: '网易云音乐', search: '/api/netease/search?num=30&kw=', lyrics: '/api/netease/lyrics', identity: 'id', download: neteaseDownloadUrl, master: false, translation: true, romanization: true, capabilities: { search: true, download: true, lyrics: true, login: true } },
+  migu: { name: '咪咕音乐', search: '/api/migu/search?num=30&kw=', lyrics: '/api/migu/lyrics', identity: 'id', download: miguDownloadUrl, master: false, translation: false, romanization: false, capabilities: { search: false, download: false, lyrics: false, login: true } }
+};
+function providerFor(source) {
+  if (!Object.prototype.hasOwnProperty.call(PROVIDERS, source)) throw new Error('未知音乐平台：' + source);
+  return PROVIDERS[source];
+}
+let _miguStatusRequest = 0;
+let _miguMessage = '尚未检查服务状态';
+const MIGU_NOTICE = '咪咕已接入关键词搜索、原文歌词 TXT / LRC、音频下载及独立扫码登录；服务可用时可请求标准 / HQ / SQ（128k / 320k / 无损），不支持母带。平台逐曲判定下载权限及可用音质，匿名仅可下载获准歌曲，不保证全曲库可下载；登录仅保存在服务内存，重启需重新扫码，登录不保证可下载。';
+function updateMiguHint() {
+  const caps = PROVIDERS.migu.capabilities;
+  $('#miguHint').textContent = MIGU_NOTICE + ' 当前能力：搜索' + (caps.search ? '可尝试' : '不可用') + ' / 下载' + (caps.download ? '可尝试' : '不可用') + ' / 歌词' + (caps.lyrics ? '可尝试' : '不可用') + '。' + _miguMessage + '；点击开始可重新检查服务能力。';
+}
+async function refreshMiguStatus() {
+  const request = ++_miguStatusRequest;
+  const platform = _platformGeneration;
+  const current = () => _source === 'migu' && platform === _platformGeneration && request === _miguStatusRequest && !_batchBusy;
+  try {
+    const j = await api('/api/migu/status');
+    if (!current()) return false;
+    for (const key of ['search', 'download', 'lyrics', 'login']) PROVIDERS.migu.capabilities[key] = j.capabilities?.[key] === true;
+    _miguMessage = String(j.message || '服务端未提供进一步说明');
+  } catch (e) {
+    if (!current()) return false;
+    for (const key of ['search', 'download', 'lyrics', 'login']) PROVIDERS.migu.capabilities[key] = false;
+    _miguMessage = '状态检查失败：' + e.message;
+  }
+  updateMiguHint();
+  updateLyricsControls();
+  return true;
+}
+const _sourceFormats = { qq: 'sq', netease: 'sq', migu: 'sq' };
 let _fmt = 'sq';  // 下载音质: standard | hq | sq | master
+
+function requestIsCurrent(source, generation) {
+  return source === _source && generation === _searchGeneration && !_batchBusy;
+}
+// Forum requests are independent of music PROVIDERS and never create downloads.
+const HIFITI_HOME = 'https://www.hifiti.com/';
+const HIFITI_LOGIN = 'https://www.hifiti.com/user-login.htm';
+const otherOwnerOptions = { credentials: 'same-origin', cache: 'no-store' };
+let _otherVisit = 0, _otherDetailGeneration = 0, _otherLoginGeneration = 0;
+let _otherSnapshot = null, _otherAuthBusy = false, _otherCsrf = '', _otherHandshake = null;
+let _otherSessionQueue = Promise.resolve();
+let _otherAuth = null, _otherAuthGeneration = 0;
+let _otherLoginFocus = null, _otherAccountTab = 'login';
+const OTHER_LOGIN_MESSAGE = '不会自动提交登录。需要验证码或安全检查时，请前往官网完成；不尝试绕过。';
+const OTHER_REGISTER_MESSAGE = '请填写邮箱、用户名及密码后主动提交。提交后可能创建账号，关闭仅关闭窗口；需要验证时不自动重试。';
+function otherSearchUrl(keyword) { return HIFITI_HOME + 'search.htm?keyword=' + encodeURIComponent(keyword); }
+function otherCurrent(visit) { return _source === 'other' && visit === _otherVisit; }
+function otherError(e) {
+  const message = String(e.message || '请求失败');
+  return /verif|captcha|challenge|security_check/i.test(String(e.code || '')) || /验证|安全检查|人机/.test(message)
+    ? message + '。请点击“前往官网登录 / 验证”在官方页面完成安全检查；本应用不会绕过，也不会自动重试登录。' : message;
+}
+function otherSafeUrl(value, official = false) {
+  try {
+    const url = new URL(String(value));
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return '';
+    if (official && url.origin !== 'https://www.hifiti.com') return '';
+    return url.href;
+  } catch (_) { return ''; }
+}
+function otherExternalLink(url, label) {
+  return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+}
+function otherSerialize(work) {
+  const pending = _otherSessionQueue.then(work);
+  _otherSessionQueue = pending.catch(() => {});
+  return pending;
+}
+function otherShowLoginStatus(j) {
+  const auth = { set: j.set === true && j.expired !== true, nickname: String(j.nickname || ''), expired: j.expired === true };
+  const changed = _otherAuth !== null && JSON.stringify(auth) !== JSON.stringify(_otherAuth);
+  if (changed) _otherAuthGeneration++;
+  _otherAuth = auth;
+  const account = auth.nickname || '当前账号';
+  $('#otherLoginBtn').textContent = auth.set ? 'HiFiTi · 已登录：' + account
+    : auth.expired ? 'HiFiTi · 登录已过期' : 'HiFiTi 登录 / 注册';
+  $('#otherLogin').textContent = auth.set ? '已登录：' + account
+    : auth.expired ? '重新登录' : '登录 / 注册';
+  $('#otherLoginStatus').textContent = auth.set
+    ? 'HiFiTi 已登录：' + (auth.nickname || '当前账号') + '（本应用后端会话，仅服务内存，重启需重新登录）'
+    : auth.expired ? 'HiFiTi 本应用登录已过期；当前仅读取公开内容，请在本应用重新登录。'
+    : 'HiFiTi 未登录；可搜索公开内容（本应用后端会话仅服务内存）';
+  return changed;
+}
+function otherResponseAuth(j) {
+  if (!j.auth || typeof j.auth.set !== 'boolean') return false;
+  const changed = otherShowLoginStatus(j.auth);
+  if (changed) {
+    _otherSnapshot = null;
+    closeOtherThread();
+    $('#otherResults').innerHTML = '';
+    $('#otherResults').setAttribute('aria-busy', 'false');
+    $('#otherPagination').hidden = true;
+  }
+  return changed;
+}
+function otherEnsureSession() {
+  if (_otherHandshake) return _otherHandshake;
+  const visit = _otherVisit;
+  const pending = otherSerialize(async () => {
+    if (!otherCurrent(visit)) return null;
+    const j = await api('/api/hifiti/login/status', otherOwnerOptions);
+    if (!otherCurrent(visit)) return null;
+    if (typeof j.csrf !== 'string' || !j.csrf) throw new Error('登录安全校验不可用，请刷新登录状态后重试');
+    _otherCsrf = j.csrf;
+    if (otherShowLoginStatus(j)) invalidateOtherContent();
+    return j;
+  });
+  _otherHandshake = pending;
+  pending.catch(() => { if (_otherHandshake === pending) _otherHandshake = null; });
+  return pending;
+}
+async function refreshOtherStatus() {
+  if (_source !== 'other' || _otherAuthBusy) return;
+  const visit = _otherVisit;
+  // Initial owner-cookie handshakes share one promise; explicit later refreshes queue.
+  if (_otherCsrf) _otherHandshake = null;
+  try { await otherEnsureSession(); }
+  catch (e) { if (otherCurrent(visit)) $('#otherLoginStatus').textContent = otherError(e); }
+}
+function closeOtherThread() {
+  _otherDetailGeneration++;
+  $('#otherThread').hidden = true;
+  $('#otherPanel').appendChild($('#otherThread'));
+  $('#otherThread').setAttribute('aria-busy', 'false');
+  $('#otherThreadTitle').textContent = '帖子详情';
+  $('#otherThreadText').textContent = '';
+  $('#otherThreadFullText').open = false;
+  $('#otherThreadNotice').textContent = '';
+  $('#otherThreadLinks').querySelectorAll('[data-other-copy]').forEach(button => { button.onclick = null; });
+  $('#otherThreadLinks').innerHTML = '';
+  $('#otherCopyStatus').textContent = '';
+  $('#otherCopyText').textContent = '';
+  $('#otherCopyText').hidden = true;
+  $('#otherThreadReload').onclick = null;
+  $('#otherThreadReload').disabled = true;
+  $('#otherThreadOfficial').hidden = true;
+  $('#otherThreadOfficial').removeAttribute('href');
+}
+function clearOtherPasswords() {
+  for (const id of ['otherPassword', 'otherRegisterPassword', 'otherRegisterConfirm']) $('#' + id).value = '';
+}
+function focusOtherControl(control) {
+  if (control && typeof control.focus === 'function') control.focus();
+}
+function setOtherAccountTab(tab, focus = false) {
+  _otherLoginGeneration++; // A pending response must not repaint another tab.
+  clearOtherPasswords();
+  _otherAccountTab = tab === 'register' ? 'register' : 'login';
+  for (const name of ['login', 'register']) {
+    const selected = name === _otherAccountTab;
+    const prefix = name === 'login' ? 'otherLogin' : 'otherRegister';
+    $('#' + prefix + 'Tab').setAttribute('aria-selected', String(selected));
+    $('#' + prefix + 'Tab').setAttribute('tabindex', selected ? '0' : '-1');
+    $('#' + prefix + 'TabPanel').hidden = !selected;
+  }
+  $('#otherLoginMessage').textContent = OTHER_LOGIN_MESSAGE;
+  $('#otherRegisterMessage').textContent = OTHER_REGISTER_MESSAGE;
+  if (focus) focusOtherControl($(_otherAccountTab === 'login' ? '#otherLoginTab' : '#otherRegisterTab'));
+}
+function closeOtherLogin(restoreFocus = true) {
+  _otherLoginGeneration++;
+  clearOtherPasswords();
+  $('#otherUsername').value = '';
+  $('#otherRegisterEmail').value = '';
+  $('#otherRegisterUsername').value = '';
+  const wasOpen = !$('#otherLoginPanel').hidden;
+  $('#otherLoginPanel').hidden = true;
+  $('#otherLogin').setAttribute('aria-expanded', 'false');
+  $('#otherLoginBtn').setAttribute('aria-expanded', 'false');
+  $('#otherLoginMessage').textContent = OTHER_LOGIN_MESSAGE;
+  $('#otherRegisterMessage').textContent = OTHER_REGISTER_MESSAGE;
+  if (wasOpen && restoreFocus) focusOtherControl(_otherLoginFocus || $('#otherLoginBtn'));
+  _otherLoginFocus = null;
+}
+function openOtherLogin(event) {
+  const trigger = event?.currentTarget || $('#otherLoginBtn');
+  if (_batchBusy) { toast('批量下载进行中，请完成后再打开 HiFiTi 登录', true); return; }
+  if (_source !== 'other') selectSource('other');
+  if (_source !== 'other') return;
+  if (!$('#otherLoginPanel').hidden) { closeOtherLogin(); return; }
+  closeOtherLogin(false);
+  _otherLoginFocus = trigger;
+  setOtherAccountTab('login');
+  $('#otherLoginPanel').hidden = false;
+  $('#otherLogin').setAttribute('aria-expanded', 'true');
+  $('#otherLoginBtn').setAttribute('aria-expanded', 'true');
+  focusOtherControl($('#otherUsername'));
+  return refreshOtherStatus(); // Opening checks status only; never submits credentials.
+}
+function otherLoginBackdrop(event) {
+  if (event.target === $('#otherLoginPanel')) closeOtherLogin();
+}
+function otherLoginKeydown(event) {
+  if ($('#otherLoginPanel').hidden) return;
+  if (event.key === 'Escape') { event.preventDefault(); closeOtherLogin(); return; }
+  if (event.key !== 'Tab') return;
+  const panel = $('#otherLoginPanel');
+  const fields = _otherAccountTab === 'login' ? ['otherUsername', 'otherPassword', 'otherLoginSubmit']
+    : ['otherRegisterEmail', 'otherRegisterUsername', 'otherRegisterPassword', 'otherRegisterConfirm', 'otherRegisterSubmit'];
+  const controls = [$('#otherLoginClose'), $(_otherAccountTab === 'login' ? '#otherLoginTab' : '#otherRegisterTab'),
+    ...fields.map(id => $('#' + id)), ...panel.querySelectorAll('a[href]')].filter(control => !control.disabled);
+  if (!controls.length) { event.preventDefault(); focusOtherControl(panel); return; }
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) {
+    event.preventDefault(); focusOtherControl(last);
+  } else if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
+    event.preventDefault(); focusOtherControl(first);
+  }
+}
+function otherAccountTabKeydown(event) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  event.preventDefault();
+  const tab = event.key === 'Home' ? 'login' : event.key === 'End' ? 'register' : _otherAccountTab === 'login' ? 'register' : 'login';
+  setOtherAccountTab(tab, true);
+}
+function invalidateOtherContent() {
+  _searchGeneration++;
+  _otherSnapshot = null;
+  closeOtherThread();
+  $('#otherResults').innerHTML = '';
+  $('#otherResults').setAttribute('aria-busy', 'false');
+  $('#otherPagination').hidden = true;
+  $('#otherPrev').disabled = true;
+  $('#otherNext').disabled = true;
+}
+function leaveOther() {
+  _otherVisit++;
+  _otherHandshake = null;
+  _otherCsrf = '';
+  _otherAuth = null;
+  _otherAuthGeneration++;
+  closeOtherLogin(false);
+  invalidateOtherContent();
+  $('#otherOpenSearch').href = HIFITI_HOME;
+  $('#otherLoginStatus').textContent = '尚未检查登录状态（不影响公开搜索）';
+}
+function otherAuthControls() {
+  for (const id of ['otherLoginSubmit', 'otherRegisterSubmit', 'otherLogout', 'otherStatusRefresh']) $('#' + id).disabled = _otherAuthBusy;
+}
+async function submitOtherLogin(event) {
+  event.preventDefault();
+  const username = $('#otherUsername').value.trim();
+  let password = $('#otherPassword').value;
+  clearOtherPasswords(); // Clear every password immediately, including validation/failure or a pending handshake.
+  if (_source !== 'other' || _otherAuthBusy) { password = ''; return; }
+  if (!username || !password) { $('#otherLoginMessage').textContent = '请输入账号和密码后主动提交。'; password = ''; return; }
+  const visit = _otherVisit, panel = _otherLoginGeneration;
+  const current = () => otherCurrent(visit) && panel === _otherLoginGeneration;
+  _otherAuthBusy = true;
+  otherAuthControls();
+  invalidateOtherContent();
+  $('#otherStatus').textContent = '登录状态正在更新，请完成后重新搜索。';
+  $('#otherLoginMessage').textContent = '正在通过本地服务提交至 HiFiTi 官方登录…';
+  try {
+    await otherEnsureSession();
+    if (!current()) return;
+    const j = await otherSerialize(async () => {
+      if (!current()) return null;
+      const body = JSON.stringify({ username, password });
+      password = '';
+      return api('/api/hifiti/login', { ...otherOwnerOptions, method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': _otherCsrf}, body });
+    });
+    if (!current() || !j) return;
+    if (typeof j.csrf === 'string' && j.csrf) _otherCsrf = j.csrf;
+    otherShowLoginStatus(j);
+    if (j.set === true && j.expired !== true) {
+      closeOtherLogin();
+      toast('HiFiTi 登录成功：' + (_otherAuth.nickname || '当前账号'));
+    } else {
+      $('#otherLoginMessage').textContent = '登录尚未确认，请刷新状态或前往官网登录 / 验证。';
+    }
+  } catch (e) { if (current()) $('#otherLoginMessage').textContent = otherError(e); }
+  finally {
+    password = '';
+    _otherAuthBusy = false;
+    otherAuthControls();
+    if (otherCurrent(visit)) {
+      _otherHandshake = null;
+      invalidateOtherContent();
+      $('#otherStatus').textContent = '登录操作已结束，请重新搜索以获取当前可见内容。';
+      await refreshOtherStatus();
+    }
+  }
+}
+async function submitOtherRegister(event) {
+  event.preventDefault();
+  const email = $('#otherRegisterEmail').value.trim();
+  const username = $('#otherRegisterUsername').value.trim();
+  let password = $('#otherRegisterPassword').value;
+  let repeatPassword = $('#otherRegisterConfirm').value;
+  clearOtherPasswords(); // Clear both fields before validation or any await.
+  if (_source !== 'other' || _otherAuthBusy) { password = repeatPassword = ''; return; }
+  let validation = '';
+  if (!email || !username || !password || !repeatPassword) validation = '请填写邮箱、用户名、密码和确认密码后主动提交。';
+  else if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) validation = '请输入有效邮箱（最多 254 个字符）。';
+  else if (username.length > 64) validation = '用户名不能超过 64 个字符。';
+  else if (password.length > 128 || repeatPassword.length > 128) validation = '密码不能超过 128 个字符。';
+  else if (password !== repeatPassword) validation = '两次输入的密码不一致，请重新输入。';
+  if (validation) { $('#otherRegisterMessage').textContent = validation; password = repeatPassword = ''; return; }
+  const visit = _otherVisit, panel = _otherLoginGeneration;
+  const current = () => otherCurrent(visit) && panel === _otherLoginGeneration;
+  _otherAuthBusy = true;
+  otherAuthControls();
+  invalidateOtherContent();
+  $('#otherStatus').textContent = '注册可能更新账号状态，请完成后重新搜索。';
+  $('#otherRegisterMessage').textContent = '正在通过本地服务提交至 HiFiTi 官方注册；提交后可能创建账号，关闭仅关闭窗口。';
+  try {
+    await otherEnsureSession();
+    if (!current()) return;
+    const j = await otherSerialize(async () => {
+      if (!current()) return null;
+      const body = JSON.stringify({ email, username, password, repeat_password: repeatPassword });
+      password = repeatPassword = '';
+      return api('/api/hifiti/register', { ...otherOwnerOptions, method:'POST', headers:{'Content-Type':'application/json', 'X-CSRF-Token':_otherCsrf}, body });
+    });
+    if (!otherCurrent(visit) || !j) return;
+    if (typeof j.csrf === 'string' && j.csrf) _otherCsrf = j.csrf;
+    if (j.registered === true) {
+      otherShowLoginStatus(j); // Only a verified set:true means authenticated.
+      if (current()) $('#otherRegisterMessage').textContent = j.set === true
+        ? '官网已接受注册请求；当前本应用会话已登录（不代表新账号已自动登录），请核对账号状态。若需激活，请先完成邮箱验证；可切换“账号登录”，不会自动提交。'
+        : '官网已接受注册请求；若需激活，请先完成邮箱验证，再使用账号登录。可切换“账号登录”，不会自动提交。';
+    } else if (current()) $('#otherRegisterMessage').textContent = '注册尚未确认，请核对官网要求；本应用不会自动重试或自动登录。';
+  } catch (e) { if (current()) $('#otherRegisterMessage').textContent = otherError(e) + '。提交结果不确定时，请先尝试登录或检查邮箱，勿重复注册。'; }
+  finally {
+    password = repeatPassword = '';
+    _otherAuthBusy = false;
+    otherAuthControls();
+    if (otherCurrent(visit)) {
+      _otherHandshake = null;
+      invalidateOtherContent();
+      $('#otherStatus').textContent = '注册操作已结束，请核对账号状态并重新搜索。';
+      await refreshOtherStatus();
+    }
+  }
+}
+async function logoutOther() {
+  if (_source !== 'other' || _otherAuthBusy) return;
+  const visit = _otherVisit;
+  closeOtherLogin();
+  invalidateOtherContent();
+  _otherAuthBusy = true;
+  otherAuthControls();
+  $('#otherStatus').textContent = '正在退出 HiFiTi 登录，请完成后重新搜索。';
+  try {
+    await otherEnsureSession();
+    if (!otherCurrent(visit)) return;
+    await otherSerialize(() => otherCurrent(visit) ? api('/api/hifiti/logout', { ...otherOwnerOptions, method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': _otherCsrf}, body: '{}' }) : null);
+    if (!otherCurrent(visit)) return;
+    _otherCsrf = '';
+    _otherHandshake = null;
+    _otherAuth = null;
+    _otherAuthGeneration++;
+    otherShowLoginStatus({set: false});
+    $('#otherLoginStatus').textContent = 'HiFiTi 已退出登录；可继续搜索公开内容。';
+    $('#otherStatus').textContent = '登录已退出，请重新搜索以获取当前可见内容。';
+  } catch (e) { if (otherCurrent(visit)) $('#otherLoginStatus').textContent = otherError(e); }
+  finally { _otherAuthBusy = false; otherAuthControls(); if (otherCurrent(visit)) { _otherHandshake = null; invalidateOtherContent(); } }
+}
+async function searchOther(keyword, page = 1, snapshot = null) {
+  if (_source !== 'other' || _otherAuthBusy) return;
+  const query = snapshot || { keyword, scope: $('#otherScope').value === 'post' ? 'post' : 'title', exact: $('#otherExact').checked === true };
+  const visit = _otherVisit, generation = ++_searchGeneration;
+  let authGeneration = _otherAuthGeneration;
+  const current = () => otherCurrent(visit) && generation === _searchGeneration && authGeneration === _otherAuthGeneration && !_otherAuthBusy;
+  closeOtherThread();
+  _otherSnapshot = null;
+  $('#otherResults').innerHTML = '';
+  $('#otherResults').setAttribute('aria-busy', 'true');
+  $('#otherPagination').hidden = true;
+  $('#otherPrev').disabled = true;
+  $('#otherNext').disabled = true;
+  $('#otherStatus').textContent = '正在搜索 HiFiTi：' + query.keyword + '…';
+  $('#otherOpenSearch').href = otherSearchUrl(query.keyword);
+  try {
+    await otherEnsureSession();
+    if (!current()) return;
+    const params = new URLSearchParams({ kw: query.keyword, page: String(page), scope: query.scope, exact: query.exact ? '1' : '0' });
+    const j = await api('/api/hifiti/search?' + params, otherOwnerOptions);
+    if (!current()) return;
+    otherResponseAuth(j);
+    authGeneration = _otherAuthGeneration; // This response's rows belong to its reported session.
+    const items = Array.isArray(j.items) ? j.items : [];
+    const currentPage = Math.max(1, Number(j.page) || page), pages = Math.max(1, Number(j.pages) || 1);
+    _otherSnapshot = { ...query, page: currentPage, pages, hasNext: j.has_next === true };
+    $('#otherStatus').textContent = 'HiFiTi「' + query.keyword + '」：' + (j.total == null ? '本页 ' + items.length + ' 条（官网未提供总数）' : '共 ' + String(j.total) + ' 条结果') + '，按官网顺序显示。';
+    $('#otherResults').innerHTML = items.length ? items.map((item, index) => {
+      const url = otherSafeUrl(item.url, true);
+      const tags = Array.isArray(item.tags) ? item.tags : [];
+      return `<article class="forum-row" role="listitem"><button class="forum-title" data-other-index="${index}">${esc(item.title)}</button>` +
+        `<div class="forum-tags">${tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>` +
+        `<div class="forum-meta">作者：${esc(item.author)} · 发布：${esc(item.created)} · 最后回复：${esc(item.last_reply)} · 浏览：${esc(String(item.views ?? '—'))}</div>` +
+        (item.excerpt ? `<div class="forum-meta">${esc(item.excerpt)}</div>` : '') +
+        (url ? `<div class="forum-meta">${otherExternalLink(url, '可选：官网原帖')}</div>` : '') + '</article>';
+    }).join('') : '<div class="empty">没有找到匹配的论坛帖子。</div>';
+    $('#otherResults').querySelectorAll('[data-other-index]').forEach(button => {
+      const item = items[Number(button.dataset.otherIndex)];
+      button.onclick = () => { if (current()) return openOtherThread(item.id, button.closest('.forum-row')); };
+    });
+    $('#otherPageInfo').textContent = '第 ' + currentPage + ' / ' + pages + ' 页';
+    $('#otherPagination').hidden = false;
+    $('#otherPrev').disabled = currentPage <= 1;
+    $('#otherNext').disabled = j.has_next !== true;
+  } catch (e) { if (current()) $('#otherStatus').textContent = otherError(e); }
+  finally { if (current()) $('#otherResults').setAttribute('aria-busy', 'false'); }
+}
+function otherPage(delta) {
+  const snapshot = _otherSnapshot;
+  if (!snapshot || (delta < 0 ? snapshot.page <= 1 : !snapshot.hasNext)) return;
+  return searchOther(snapshot.keyword, snapshot.page + delta, snapshot);
+}
+function otherRenderResources(j, current) {
+  // Prefer the explicit resource/code association; never guess a code from body text.
+  const resources = (Array.isArray(j.resources) ? j.resources : Array.isArray(j.links) ? j.links : [])
+    .filter(resource => resource && otherSafeUrl(resource.url))
+    .map(resource => ({ url: otherSafeUrl(resource.url), label: String(resource.label || '外部资源'), code: String(resource.code || '') }));
+  $('#otherThreadLinks').innerHTML = resources.map((resource, index) =>
+    `<article class="forum-resource"><strong>${esc(resource.label)}</strong>` +
+    otherExternalLink(resource.url, resource.url) +
+    `<div class="forum-resource-code">${resource.code ? '提取码：' + esc(resource.code) : '未提供明确提取码；请核对帖子正文。'}</div>` +
+    `<div class="forum-toolbar"><button class="btn" data-other-copy="link" data-resource-index="${index}">复制链接</button>` +
+    `<button class="btn" data-other-copy="code" data-resource-index="${index}"${resource.code ? '' : ' disabled'}>复制提取码</button>` +
+    `<button class="btn" data-other-copy="all" data-resource-index="${index}">复制全部</button></div></article>`
+  ).join('');
+  let copyGeneration = 0;
+  $('#otherThreadLinks').querySelectorAll('[data-other-copy]').forEach(button => {
+    const resource = resources[Number(button.dataset.resourceIndex)];
+    const kind = button.dataset.otherCopy;
+    const text = kind === 'code' ? resource.code : kind === 'all'
+      ? resource.url + (resource.code ? '\n提取码：' + resource.code : '') : resource.url;
+    button.onclick = async () => {
+      if (!current() || button.disabled || !text) return;
+      const copy = ++copyGeneration;
+      const copyCurrent = () => current() && copy === copyGeneration;
+      $('#otherCopyText').hidden = true;
+      $('#otherCopyText').textContent = '';
+      $('#otherCopyStatus').textContent = '正在复制…';
+      try {
+        if (typeof navigator === 'undefined' || typeof navigator.clipboard?.writeText !== 'function') throw new Error('clipboard unavailable');
+        // Only this explicit click handler may write; no rendering/login/reload clipboard access.
+        await navigator.clipboard.writeText(text);
+        if (copyCurrent()) $('#otherCopyStatus').textContent = '已复制' + (kind === 'code' ? '提取码' : kind === 'all' ? '链接及可用提取码' : '链接') + '。';
+      } catch (_) {
+        if (!copyCurrent()) return;
+        $('#otherCopyStatus').textContent = '剪贴板不可用或复制失败；请手动选择下方文本复制（Ctrl+C / 长按）。';
+        $('#otherCopyText').textContent = text;
+        $('#otherCopyText').hidden = false;
+      }
+    };
+  });
+  return resources.length;
+}
+async function openOtherThread(id, row = null) {
+  if (_source !== 'other' || _otherAuthBusy) return;
+  closeOtherThread();
+  if (row && $('#otherResults').contains(row)) row.appendChild($('#otherThread'));
+  const visit = _otherVisit, search = _searchGeneration;
+  let generation = _otherDetailGeneration, authGeneration = _otherAuthGeneration;
+  const current = () => otherCurrent(visit) && generation === _otherDetailGeneration && search === _searchGeneration && authGeneration === _otherAuthGeneration && !_otherAuthBusy;
+  const bindReload = () => {
+    $('#otherThreadReload').disabled = false;
+    $('#otherThreadReload').onclick = () => { if (current()) return openOtherThread(id, row); };
+  };
+  $('#otherThread').hidden = false;
+  $('#otherThread').setAttribute('aria-busy', 'true');
+  $('#otherThreadNotice').textContent = '正在读取帖子…';
+  try {
+    await otherEnsureSession();
+    if (!current()) return;
+    const j = await api('/api/hifiti/thread?id=' + encodeURIComponent(id), otherOwnerOptions);
+    if (!current()) return;
+    otherResponseAuth(j);
+    generation = _otherDetailGeneration;
+    authGeneration = _otherAuthGeneration;
+    if (row && $('#otherResults').contains(row)) row.appendChild($('#otherThread'));
+    $('#otherThread').hidden = false;
+    $('#otherThreadTitle').textContent = String(j.title || '帖子详情');
+    $('#otherThreadText').textContent = String(j.text || '');
+    const count = otherRenderResources(j, current);
+    const account = _otherAuth?.expired ? '登录已过期，当前仅公开会话' : _otherAuth?.set ? '当前账号（' + (_otherAuth.nickname || '已登录') + '）' : '当前公开会话（未登录）';
+    $('#otherThreadNotice').textContent = count
+      ? '已读取 ' + count + ' 个可见资源 · ' + account + '。链接和明确提取码见下方；未显示的内容仍以官网权限为准。'
+      : (account + '：' + String(j.notice || '本次未发现可见资源链接。请核对正文，或在本应用登录后重新读取；官网权限及验证要求仍然适用。'));
+    const url = otherSafeUrl(j.url, true);
+    $('#otherThreadOfficial').hidden = !url;
+    if (url) $('#otherThreadOfficial').href = url;
+  } catch (e) { if (current()) $('#otherThreadNotice').textContent = otherError(e); }
+  finally {
+    if (current()) {
+      $('#otherThread').setAttribute('aria-busy', 'false');
+      bindReload();
+    }
+  }
+}
+$('#otherLogin').onclick = openOtherLogin;
+$('#otherLoginBtn').onclick = openOtherLogin;
+$('#otherLoginForm').onsubmit = submitOtherLogin;
+$('#otherRegisterForm').onsubmit = submitOtherRegister;
+$('#otherLoginClose').onclick = () => closeOtherLogin();
+$('#otherLoginPanel').onclick = otherLoginBackdrop;
+$('#otherLoginTab').onclick = () => setOtherAccountTab('login');
+$('#otherRegisterTab').onclick = () => setOtherAccountTab('register');
+$('#otherLoginTab').onkeydown = otherAccountTabKeydown;
+$('#otherRegisterTab').onkeydown = otherAccountTabKeydown;
+document.addEventListener('keydown', otherLoginKeydown);
+$('#otherLogout').onclick = logoutOther;
+$('#otherStatusRefresh').onclick = refreshOtherStatus;
+$('#otherPrev').onclick = () => otherPage(-1);
+$('#otherNext').onclick = () => otherPage(1);
+$('#otherThreadClose').onclick = closeOtherThread;
+window.addEventListener('pagehide', () => { leaveOther(); });
+function selectSource(source) {
+  if (source !== 'other' && !Object.prototype.hasOwnProperty.call(PROVIDERS, source)) { toast('未知音乐平台：' + source, true); return; }
+  if (_batchBusy || source === _source) return;
+  if (_source !== 'other') {
+    _sourceFormats[_source] = _fmt;
+    _sourceLyrics[_source] = lyricsOptions();
+  }
+  leaveOther();
+  // Invalidate every login response from the previous source visit, including
+  // switching away and back before a pending QR start/status returns.
+  miguLogin.close();
+  _source = source;
+  if (source !== 'other') {
+    Object.assign(_sourceLyrics[source], { translation: PROVIDERS[source].translation && _sourceLyrics[source].translation, romanization: PROVIDERS[source].romanization && _sourceLyrics[source].romanization });
+    ({ enabled: _lyricsEnabled, format: _lyricsFormat, translation: _lyricsTranslation, romanization: _lyricsRomanization } = _sourceLyrics[source]);
+  }
+  _platformGeneration++;
+  _searchGeneration++;
+  _fmt = _sourceFormats[source];
+  document.querySelectorAll('.source-btn').forEach(btn => {
+    const active = btn.dataset.source === source;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+  document.querySelectorAll('.fmt-btn').forEach(btn => {
+    btn.disabled = source === 'other' || (!PROVIDERS[source].master && btn.dataset.fmt === 'master');
+    btn.classList.toggle('active', btn.dataset.fmt === _fmt);
+  });
+  updateLyricsControls();
+  $('#qqHint').style.display = source === 'qq' ? '' : 'none';
+  $('#neteaseHint').style.display = source === 'netease' ? 'inline' : 'none';
+  $('#miguHint').style.display = source === 'migu' ? 'inline' : 'none';
+  $('#otherHint').style.display = source === 'other' ? 'inline' : 'none';
+  $('#audioOptions').hidden = source === 'other';
+  $('#musicResultsPanel').hidden = source === 'other';
+  $('#otherPanel').hidden = source !== 'other';
+  input.placeholder = source === 'other' ? '输入关键词，在 HiFiTi 官方网站搜索资源' : source === 'qq' ? '输入歌名/歌手搜索，或粘贴 全民K歌/QQ音乐歌单 链接' : '输入歌名 / 歌手搜索' + PROVIDERS[source].name;
+  $('#resultCount').textContent = '';
+  showStatus(source === 'migu' ? '输入关键词搜索咪咕音乐。正在检查服务能力；下载权限及可用音质由平台逐曲判定。' : source === 'netease' ? '输入关键词搜索网易云音乐，无需先登录' : '输入关键词搜索 QQ音乐，或粘贴 K歌 / QQ歌单链接');
+  if (source !== 'qq') closeQqLogin();
+  if ((source === 'migu' || source === 'other') && $('#neteaseLoginPanel').style.display === 'block') neteaseLogin.close();
+  if (source === 'other') {
+    // Do not send a keyword or even an owner handshake merely on source selection.
+    $('#otherStatus').textContent = '上方输入关键词并点击开始；公开内容无需先登录，登录按钮可独立使用。';
+  }
+  if (source === 'migu') { updateMiguHint(); refreshMiguStatus(); }
+}
+document.querySelectorAll('.source-btn').forEach(btn => {
+  btn.onclick = () => selectSource(btn.dataset.source);
+});
+
+// Keep result nodes stable for every batch, including lyrics and K歌 batches.
+result.addEventListener('click', event => {
+  if (_batchBusy) { event.preventDefault(); event.stopImmediatePropagation(); }
+}, true);
+async function runResultBatch(work) {
+  if (_batchBusy) return;
+  if ([...result.querySelectorAll('button')].some(btn => btn.disabled && !btn.classList.contains('done') && btn.dataset.unavailable !== 'true')) {
+    toast('请等待当前单曲操作完成后再批量下载', true);
+    return;
+  }
+  _batchBusy = true;
+  _searchGeneration++;
+  const controls = [...document.querySelectorAll('.source-btn, .fmt-btn, .lyrics-options input, .lyrics-options select'), goBtn, input, ...result.querySelectorAll('button')];
+  const disabled = controls.map(btn => btn.disabled);
+  controls.forEach(btn => { btn.disabled = true; });
+  try { await work(); }
+  catch (e) { toast(e.message, true); }
+  finally {
+    controls.forEach((btn, i) => { btn.disabled = disabled[i]; });
+    _batchBusy = false;
+  }
+}
 let _lyricsEnabled = localStorage.getItem('lyricsEnabled') === '1';
-let _lyricsFormat = localStorage.getItem('lyricsFormat') || 'txt';
+let _lyricsFormat = localStorage.getItem('lyricsFormat') === 'lrc' ? 'lrc' : 'txt';
 let _lyricsTranslation = localStorage.getItem('lyricsTranslation') === '1';
 let _lyricsRomanization = localStorage.getItem('lyricsRomanization') === '1';
 
@@ -429,45 +1213,126 @@ const $lyricsEnabled = $('#lyricsEnabled');
 const $lyricsFormat = $('#lyricsFormat');
 const $lyricsTranslation = $('#lyricsTranslation');
 const $lyricsRomanization = $('#lyricsRomanization');
-$lyricsEnabled.checked = _lyricsEnabled;
-$lyricsFormat.value = _lyricsFormat;
-$lyricsTranslation.checked = _lyricsTranslation;
-$lyricsRomanization.checked = _lyricsRomanization;
-function saveLyricsOptions() {
-  localStorage.setItem('lyricsEnabled', _lyricsEnabled ? '1' : '0');
-  localStorage.setItem('lyricsFormat', _lyricsFormat);
-  localStorage.setItem('lyricsTranslation', _lyricsTranslation ? '1' : '0');
-  localStorage.setItem('lyricsRomanization', _lyricsRomanization ? '1' : '0');
+function storedLyricsOptions(source) {
+  const read = key => localStorage.getItem(source + '.' + key) ?? (source === 'migu' ? null : localStorage.getItem(key));
+  return { enabled: read('lyricsEnabled') === '1', format: read('lyricsFormat') === 'lrc' ? 'lrc' : 'txt', translation: PROVIDERS[source].translation && read('lyricsTranslation') === '1', romanization: PROVIDERS[source].romanization && read('lyricsRomanization') === '1' };
 }
-$lyricsEnabled.onchange = () => { _lyricsEnabled = $lyricsEnabled.checked; saveLyricsOptions(); };
-$lyricsFormat.onchange = () => { _lyricsFormat = $lyricsFormat.value; saveLyricsOptions(); };
-$lyricsTranslation.onchange = () => { _lyricsTranslation = $lyricsTranslation.checked; saveLyricsOptions(); };
-$lyricsRomanization.onchange = () => { _lyricsRomanization = $lyricsRomanization.checked; saveLyricsOptions(); };
+const _sourceLyrics = { qq: storedLyricsOptions('qq'), netease: storedLyricsOptions('netease'), migu: storedLyricsOptions('migu') };
+({ enabled: _lyricsEnabled, format: _lyricsFormat, translation: _lyricsTranslation, romanization: _lyricsRomanization } = _sourceLyrics.qq);
+function updateLyricsControls() {
+  $('.lyrics-options').hidden = _source === 'other';
+  if (_source === 'other') {
+    for (const control of [$lyricsEnabled, $lyricsFormat, $lyricsTranslation, $lyricsRomanization]) control.disabled = true;
+    for (const control of [$lyricsEnabled, $lyricsTranslation, $lyricsRomanization]) control.checked = false;
+    return;
+  }
+  const p = providerFor(_source);
+  $lyricsEnabled.checked = _lyricsEnabled;
+  $lyricsFormat.value = _lyricsFormat;
+  $lyricsTranslation.checked = p.translation && _lyricsTranslation;
+  $lyricsRomanization.checked = p.romanization && _lyricsRomanization;
+  $lyricsEnabled.disabled = _batchBusy || !p.capabilities.lyrics;
+  $lyricsFormat.disabled = _batchBusy || !p.capabilities.lyrics;
+  $lyricsTranslation.disabled = _batchBusy || !p.capabilities.lyrics || !p.translation;
+  $lyricsRomanization.disabled = _batchBusy || !p.capabilities.lyrics || !p.romanization;
+}
+function saveLyricsOptions() {
+  _sourceLyrics[_source] = lyricsOptions();
+  const values = { lyricsEnabled: _lyricsEnabled ? '1' : '0', lyricsFormat: _lyricsFormat, lyricsTranslation: _lyricsTranslation ? '1' : '0', lyricsRomanization: _lyricsRomanization ? '1' : '0' };
+  for (const [key, value] of Object.entries(values)) {
+    localStorage.setItem(_source + '.' + key, value);
+    if (_source === 'qq') localStorage.setItem(key, value); // Preserve legacy QQ preferences.
+  }
+}
+$lyricsEnabled.onchange = () => { if (!$lyricsEnabled.disabled) { _lyricsEnabled = $lyricsEnabled.checked; saveLyricsOptions(); } };
+$lyricsFormat.onchange = () => { if (!$lyricsFormat.disabled) { _lyricsFormat = $lyricsFormat.value; saveLyricsOptions(); } };
+$lyricsTranslation.onchange = () => { if (!$lyricsTranslation.disabled) { _lyricsTranslation = $lyricsTranslation.checked; saveLyricsOptions(); } };
+$lyricsRomanization.onchange = () => { if (!$lyricsRomanization.disabled) { _lyricsRomanization = $lyricsRomanization.checked; saveLyricsOptions(); } };
+updateLyricsControls();
 
 document.querySelectorAll('.fmt-btn').forEach(btn => {
   btn.onclick = () => {
+    if (_batchBusy || btn.disabled) return;
     document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     _fmt = btn.dataset.fmt;
+    _sourceFormats[_source] = _fmt;
     toast('下载音质已切换为 ' + Q_NAMES[_fmt] + '（无此音质时自动降低）');
   };
 });
 
-function fmtParam() { return '&quality=' + _fmt; }
-function lyricParam() {
-  if (!_lyricsEnabled) return '';
-  return '&lyrics=1&lyrics_format=' + encodeURIComponent(_lyricsFormat) +
-    '&translation=' + (_lyricsTranslation ? '1' : '0') +
-    '&romanization=' + (_lyricsRomanization ? '1' : '0');
+function fmtParam() { return '&quality=' + encodeURIComponent(_sourceFormats.qq); }
+function lyricsOptions(source) {
+  const active = { enabled: _lyricsEnabled, format: _lyricsFormat, translation: _lyricsTranslation, romanization: _lyricsRomanization };
+  if (source === undefined) return active;
+  const p = providerFor(source);
+  const options = source === _source ? active : _sourceLyrics[source];
+  return { ...options, enabled: options.enabled && p.capabilities.lyrics, translation: options.translation && p.translation, romanization: options.romanization && p.romanization };
 }
-function lyricQuery(s) {
-  return `mid=${encodeURIComponent(s.mid)}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer || '')}` +
-    '&format=' + encodeURIComponent(_lyricsFormat) +
-    '&translation=' + (_lyricsTranslation ? '1' : '0') +
-    '&romanization=' + (_lyricsRomanization ? '1' : '0');
+function lyricParam(options = lyricsOptions()) {
+  if (!options.enabled) return '';
+  return '&lyrics=1&lyrics_format=' + encodeURIComponent(options.format) +
+    '&translation=' + (options.translation ? '1' : '0') +
+    '&romanization=' + (options.romanization ? '1' : '0');
+}
+function assertSongSource(s, source) {
+  providerFor(source);
+  if (s.source !== undefined && s.source !== source) throw new Error('歌曲平台不匹配：' + s.source + ' / ' + source);
+}
+function lyricQuery(s, source = 'qq', options = lyricsOptions(source)) {
+  assertSongSource(s, source);
+  const p = providerFor(source);
+  options = { ...options, translation: options.translation && p.translation, romanization: options.romanization && p.romanization };
+  const identity = p.identity + '=' + encodeURIComponent(s[p.identity]);
+  return identity + `&name=${encodeURIComponent(s.name || '')}&singer=${encodeURIComponent(s.singer || '')}` +
+    '&format=' + encodeURIComponent(options.format) +
+    '&translation=' + (options.translation ? '1' : '0') +
+    '&romanization=' + (options.romanization ? '1' : '0');
+}
+function lyricsUrl(s, source = 'qq', preview = false, options = lyricsOptions(source)) {
+  const base = providerFor(source).lyrics;
+  return base + (preview ? '?' : '/download?') + lyricQuery(s, source, options) + (preview ? '&preview=1' : '');
 }
 function qqDownloadUrl(s) {
-  return `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name)}&singer=${encodeURIComponent(s.singer)}${fmtParam()}${lyricParam()}`;
+  assertSongSource(s, 'qq');
+  return `/api/download?mid=${encodeURIComponent(s.mid)}&media_mid=${encodeURIComponent(s.file?.media_mid || '')}&name=${encodeURIComponent(s.name || '')}&singer=${encodeURIComponent(s.singer || '')}${fmtParam()}${lyricParam(lyricsOptions('qq'))}`;
+}
+function neteaseDownloadUrl(s) {
+  assertSongSource(s, 'netease');
+  const quality = ['standard', 'hq', 'sq'].includes(_sourceFormats.netease) ? _sourceFormats.netease : 'sq';
+  return `/api/netease/download?id=${encodeURIComponent(s.id)}&quality=${quality}${lyricParam(lyricsOptions('netease'))}`;
+}
+function miguDownloadUrl(s) {
+  assertSongSource(s, 'migu');
+  const quality = ['standard', 'hq', 'sq'].includes(_sourceFormats.migu) ? _sourceFormats.migu : 'sq';
+  return `/api/migu/download?id=${encodeURIComponent(s.id)}&quality=${quality}${lyricParam(lyricsOptions('migu'))}`;
+}
+
+function lyricWarnings(j, sidecar = false) {
+  const warnings = sidecar ? j.lyrics_warnings : j.warnings;
+  const error = sidecar ? j.lyrics_error : '';
+  return [...new Set([error, ...(Array.isArray(warnings) ? warnings : (warnings ? [warnings] : []))].filter(Boolean).map(String))];
+}
+function conversionFeedback(j) {
+  const messages = [];
+  if (j.converted === true) messages.push('已转换为 ' + (j.format || '实际音频格式'));
+  if (j.conversion_error) messages.push('转换警告：' + j.conversion_error + '（已保留 NCM）');
+  return messages.join('；');
+}
+function setAudioDone(btn, j) {
+  btn._downloadResult = j;
+  btn.classList.add('done');
+  btn.innerHTML = '✓ 已下载';
+  btn.title = [conversionFeedback(j), ...lyricWarnings(j, true)].filter(Boolean).join('；');
+}
+function recordAudioResult(counts, j) {
+  counts.ok++;
+  if (j?.converted === true) counts.converted++;
+  if (j?.conversion_error) counts.conversionWarnings++;
+  if (j && lyricWarnings(j, true).length) counts.lyricWarnings++;
+}
+function audioBatchSummary(counts) {
+  return `成功 ${counts.ok} 首，失败 ${counts.fail} 首；转换成功 ${counts.converted} 首，转换警告 ${counts.conversionWarnings} 首（已保留 NCM）；歌词警告 ${counts.lyricWarnings} 首`;
 }
 
 async function downloadToServer(url, opts) {
@@ -508,11 +1373,11 @@ async function downloadSong(btn, url) {
   setBtnLoading(btn, true);
   try {
     const j = await downloadToServer(url);
-    btn.classList.add('done');
-    btn.innerHTML = '✓ 已下载';
+    setAudioDone(btn, j);
     const q = j.quality_name ? ` · ${j.quality_name}` : '';
-    const lyric = j.lyrics_name ? `，歌词 ${j.lyrics_name}` : (j.lyrics_error ? `，歌词暂不可用` : '');
-    toast(`已保存到下载文件夹: ${j.name}（${fmtSize(j.size)}${q}）${lyric}`);
+    const lyric = j.lyrics_name ? `，歌词 ${j.lyrics_name}` : '';
+    const feedback = [conversionFeedback(j), ...lyricWarnings(j, true).map(w => '歌词警告：' + w)].filter(Boolean).join('；');
+    toast(`已保存到下载文件夹: ${j.name}（${fmtSize(j.size)}${q}）${lyric}${feedback ? '；' + feedback : ''}`);
     refreshFiles();
   } catch (e) {
     setBtnLoading(btn, false);
@@ -520,7 +1385,7 @@ async function downloadSong(btn, url) {
   }
 }
 
-async function previewLyrics(btn, s) {
+async function previewLyrics(btn, s, source = 'qq') {
   const wrap = btn.closest('.song-row-wrap');
   const slot = wrap && wrap.querySelector('.lyric-preview-slot');
   const existing = slot && slot.querySelector('.lyric-preview');
@@ -529,9 +1394,12 @@ async function previewLyrics(btn, s) {
     btn.textContent = '歌词预览';
     return;
   }
+  const generation = _searchGeneration;
+  const current = () => generation === _searchGeneration && result.contains(btn);
   setBtnLoading(btn, true, '读取中');
   try {
-    const j = await api('/api/lyrics?' + lyricQuery(s) + '&preview=1');
+    const j = await api(lyricsUrl(s, source, true));
+    if (!current()) { setBtnLoading(btn, false); return; }
     const parts = [];
     const labels = [['lyric', '原文'], ['translation', '翻译'], ['romanization', '罗马音']];
     labels.forEach(([key, label]) => {
@@ -540,22 +1408,24 @@ async function previewLyrics(btn, s) {
     if (!parts.length) parts.push('<div>暂无歌词</div>');
     const box = document.createElement('div');
     box.className = 'lyric-preview';
-    box.innerHTML = parts.join('') + (j.truncated ? '<div style="color:var(--text2);margin-top:6px">预览已截断，可点击“仅歌词”保存完整内容</div>' : '');
+    box.innerHTML = parts.join('') + lyricWarnings(j).map(w => `<div class="lyric-warning">${esc(w)}</div>`).join('') + (j.truncated ? '<div style="color:var(--text2);margin-top:6px">预览已截断，可点击“仅歌词”保存完整内容</div>' : '');
     if (slot) slot.appendChild(box);
     setBtnLoading(btn, false);
     btn.innerHTML = '收起歌词';
   } catch (e) {
     setBtnLoading(btn, false);
-    toast(e.message, true);
+    if (current()) toast(e.message, true);
   }
 }
 
-async function downloadLyrics(btn, s) {
+async function downloadLyrics(btn, s, source = 'qq') {
   setBtnLoading(btn, true, '保存中');
   try {
-    const j = await downloadToServer('/api/lyrics/download?' + lyricQuery(s));
+    const j = await downloadToServer(lyricsUrl(s, source));
     btn.classList.add('done'); btn.innerHTML = '✓ 歌词已保存';
-    toast(`歌词已保存: ${j.name}（${fmtSize(j.size)}）`);
+    const warnings = lyricWarnings(j);
+    btn.title = warnings.join('；');
+    toast(`歌词已保存: ${j.name}（${fmtSize(j.size)}）${warnings.length ? '；歌词警告：' + warnings.join('；') : ''}`);
     refreshFiles();
   } catch (e) {
     setBtnLoading(btn, false);
@@ -564,34 +1434,59 @@ async function downloadLyrics(btn, s) {
 }
 
 /* ---------------- 搜索 ---------------- */
-async function doSearch(kw) {
+async function doSearch(kw, source, generation) {
+  if (!requestIsCurrent(source, generation)) return;
   showStatus('<span class="spinner"></span>正在搜索「' + esc(kw) + '」...');
   try {
-    const j = await api('/api/search?kw=' + encodeURIComponent(kw));
-    if (!j.songs.length) { showStatus('没有找到相关歌曲', true); return; }
-    renderSongs(j.songs, '搜索结果');
+    const p = providerFor(source);
+    // Search stays retryable when the last status was unavailable, without
+    // sending a search request until the backend advertises that capability.
+    if (source === 'migu') {
+      const refreshed = await refreshMiguStatus();
+      if (!refreshed || !requestIsCurrent(source, generation)) return;
+      if (!p.capabilities.search) { showStatus('咪咕搜索暂不可用：' + esc(_miguMessage) + '。可点击开始重试。', true); return; }
+    }
+    const j = await api(p.search + encodeURIComponent(kw));
+    if (!requestIsCurrent(source, generation)) return;
+    if (!j.songs.length) {
+      showStatus(source === 'qq' ? 'QQ音乐返回空结果。请尝试更换关键词；如果熟悉的歌曲也搜不到，请重新扫码登录后重试。' : p.name + '返回空结果，请尝试更换关键词。', true);
+      return;
+    }
+    renderSongs(j.songs, p.name + ' · 搜索结果', p.download, { source });
   } catch (e) {
-    showStatus(esc(e.message), true);
+    if (!requestIsCurrent(source, generation)) return;
+    showStatus(esc(e.message) + (source === 'netease' ? '<br>匿名可搜索；下载以账号权益及版权许可为准。' : source === 'migu' ? '<br>咪咕服务暂不可用可重试；下载仍须核验版权及权益。' : ''), true);
+    if (source === 'qq' && e.code === 'LOGIN_REQUIRED') openQqLogin();
   }
 }
 
-function renderSongs(songs, title, dlUrlFn) {
-  window._songs = songs;
-  window._songsDlFn = dlUrlFn || null;
+function renderSongs(songs, title, dlUrlFn, capabilities = {}) {
+  const source = capabilities.source ?? songs[0]?.source ?? 'qq';
+  const p = providerFor(source);
+  songs.forEach(s => assertSongSource(s, source));
+  // A render owns its dispatch and capabilities, even after a source switch.
+  dlUrlFn = dlUrlFn || p.download;
+  const hasLyrics = capabilities.lyrics !== false && p.capabilities.lyrics;
+  const canDownload = capabilities.download !== false && p.capabilities.download;
+  const downloadReason = canDownload ? '' : p.name + '下载暂不可用：' + (source === 'migu' ? _miguMessage : '服务端尚不支持');
+  const netease = source === 'netease';
+  const migu = source === 'migu';
   const rows = songs.map((s, i) => {
-    const isVip = s.pay_play == 1;
+    const isVip = netease ? Number(s.fee) > 0 : s.pay_play == 1;
+    const rights = (netease || migu) ? (s.rights_hint || (typeof s.rights === 'string' ? s.rights : '') || s.hint || '下载取决于账号权益及版权许可，尚未核验') : '';
+    const tag = migu ? '<span class="tag">权益待核验</span>' : netease ? `<span class="tag ${isVip ? 'vip' : 'free'}">${isVip ? '需权益 · fee ' + esc(s.fee) : '以可用权益为准'}</span>` : (isVip ? '<span class="tag vip">VIP</span>' : '<span class="tag free">免费</span>');
     return `
     <div class="song-row-wrap" data-song-index="${i}">
       <div class="song">
         <div class="idx">${i + 1}</div>
         <div class="main">
-          <div class="name">${esc(s.name)}${isVip ? '<span class="tag vip">VIP</span>' : '<span class="tag free">免费</span>'}</div>
+          <div class="name">${esc(s.name)}${tag}</div>
           <div class="sub">${esc(s.singer)}${s.album ? ' · ' + esc(s.album) : ''}${s.duration ? ' · ' + fmtTime(s.duration) : ''}</div>
+          ${netease || migu ? `<div class="sub" title="${esc(rights)}">${esc(rights)}</div>` : ''}
         </div>
         <div class="song-actions">
-          <button type="button" class="btn lyric-preview-action" onclick="window._lyricPreview(this, ${i})">歌词预览</button>
-          <button type="button" class="btn lyric-download-action" onclick="window._lyricDownload(this, ${i})">仅歌词</button>
-          <button type="button" class="btn download-action" ${isVip ? `title="标记为VIP，登录Cookie有效时可直接下载" onclick="window._dlIdx(this, ${i})"` : `onclick="window._dlIdx(this, ${i})"`}>⬇ 下载</button>
+          ${hasLyrics ? '<button type="button" class="btn lyric-preview-action">歌词预览</button><button type="button" class="btn lyric-download-action">仅歌词</button>' : ''}
+          <button type="button" class="btn download-action" ${canDownload ? '' : 'disabled data-unavailable="true"'} title="${esc(downloadReason || (migu ? '平台逐曲判定下载权限及可用音质；匿名仅可下载获准歌曲，扫码登录不保证可下载' : netease ? '下载取决于账号权益、版权及可用音质，登录不保证可下载' : '付费歌曲需要相应账号权益'))}">${canDownload ? '⬇ 下载' : '下载暂不可用'}</button>
         </div>
       </div>
       <div class="lyric-preview-slot"></div>
@@ -600,10 +1495,10 @@ function renderSongs(songs, title, dlUrlFn) {
   result.innerHTML = `
     <div class="card">
       <div class="title-row">
-        <div class="info"><h2>${esc(title)}</h2><div class="meta">共 ${songs.length} 首</div></div>
+        <div class="info"><h2>${esc(title)}</h2><div class="meta">共 ${songs.length} 首${downloadReason ? ' · ' + esc(downloadReason) : ''}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-          <button class="btn" id="lyricAll">全部歌词</button>
-          <button class="btn primary" id="dlAll">全部下载</button>
+          ${hasLyrics ? '<button class="btn" id="lyricAll">全部歌词</button>' : ''}
+          <button class="btn primary" id="dlAll" ${canDownload ? '' : 'disabled data-unavailable="true"'} title="${esc(downloadReason)}">全部下载</button>
         </div>
       </div>
       <div class="progress-bar" id="pbar" style="display:none"><div class="fill" id="pfill"></div></div>
@@ -611,64 +1506,85 @@ function renderSongs(songs, title, dlUrlFn) {
       <div class="list">${rows}</div>
     </div>`;
   $('#resultCount').textContent = songs.length + ' 首';
-  window._dlIdx = (btn, i) => {
-    const s = window._songs[i];
-    const url = window._songsDlFn
-      ? window._songsDlFn(s)
-      : qqDownloadUrl(s);
-    downloadSong(btn, url);
-  };
-  window._lyricPreview = (btn, i) => previewLyrics(btn, window._songs[i]);
-  window._lyricDownload = (btn, i) => downloadLyrics(btn, window._songs[i]);
-  $('#dlAll').onclick = () => downloadAll(songs, dlUrlFn);
-  $('#lyricAll').onclick = () => downloadAllLyrics(songs);
+  result.querySelectorAll('.song-row-wrap').forEach((row, i) => {
+    // Capture this render's songs and platform URL builder, never the current source.
+    const s = songs[i];
+    row.querySelector('.download-action').onclick = function () { if (canDownload) downloadSong(this, dlUrlFn(s)); };
+    if (hasLyrics) {
+      row.querySelector('.lyric-preview-action').onclick = function () { previewLyrics(this, s, source); };
+      row.querySelector('.lyric-download-action').onclick = function () { downloadLyrics(this, s, source); };
+    }
+  });
+  $('#dlAll').onclick = () => { if (canDownload) return runResultBatch(() => downloadAll(songs, dlUrlFn)); };
+  if (hasLyrics) $('#lyricAll').onclick = () => runResultBatch(() => downloadAllLyrics(songs, source));
 }
 
-async function downloadAllLyrics(songs) {
+async function downloadAllLyrics(songs, source = 'qq') {
   const btn = $('#lyricAll');
+  const options = lyricsOptions(source);
+  const bar = $('#pbar'), fill = $('#pfill'), ptext = $('#ptext');
+  bar.style.display = 'block'; ptext.style.display = 'block';
   if (btn) setBtnLoading(btn, true, '保存中');
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, warnings = 0;
+  const details = [];
   for (let i = 0; i < songs.length; i++) {
+    ptext.textContent = `正在保存歌词 ${i + 1}/${songs.length}：${songs[i].name}`;
+    fill.style.width = (i / songs.length * 100) + '%';
     try {
-      await downloadToServer('/api/lyrics/download?' + lyricQuery(songs[i]));
+      const j = await downloadToServer(lyricsUrl(songs[i], source, false, options));
       ok++;
-    } catch (e) { fail++; }
+      const messages = lyricWarnings(j);
+      if (messages.length) { warnings++; details.push(songs[i].name + '：' + messages.join('；')); }
+    } catch (e) { fail++; details.push(songs[i].name + '：' + e.message); }
   }
   if (btn) { btn.disabled = false; btn.textContent = '全部歌词'; }
-  toast(`歌词下载完成（成功 ${ok}${fail ? '，失败 ' + fail : ''}）`);
+  fill.style.width = '100%';
+  const summary = `歌词下载完成：成功 ${ok} 首，失败 ${fail} 首，歌词警告 ${warnings} 首`;
+  ptext.textContent = summary + (details.length ? '；' + details.join('；') : '');
+  toast(summary);
   refreshFiles();
 }
 
-async function downloadAll(songs, dlUrlFn) {
+async function downloadAll(songs, dlUrlFn = qqDownloadUrl) {
   const btns = result.querySelectorAll('.download-action');
   const bar = $('#pbar'), fill = $('#pfill'), ptext = $('#ptext');
+  // Snapshot all queries before awaiting; a batch uses one set of options.
+  const urls = songs.map(s => dlUrlFn(s));
   bar.style.display = 'block'; ptext.style.display = 'block';
-  let ok = 0, fail = 0;
+  const counts = { ok: 0, fail: 0, converted: 0, conversionWarnings: 0, lyricWarnings: 0 };
+  const details = [];
+  function record(s, j) {
+    recordAudioResult(counts, j);
+    const feedback = j && [conversionFeedback(j), ...lyricWarnings(j, true).map(w => '歌词警告：' + w)].filter(Boolean).join('；');
+    if (feedback) details.push(s.name + '：' + feedback);
+  }
   for (let i = 0; i < songs.length; i++) {
     const s = songs[i];
     ptext.textContent = `正在下载 ${i + 1}/${songs.length}：${s.name}`;
     fill.style.width = (i / songs.length * 100) + '%';
     const btn = btns[i];
-    if (btn.classList.contains('done')) { ok++; continue; }
+    if (btn.classList.contains('done')) { record(s, btn._downloadResult); continue; }
     setBtnLoading(btn, true);
     try {
-      const url = dlUrlFn ? dlUrlFn(s) : qqDownloadUrl(s);
-      await downloadToServer(url);
-      btn.classList.add('done'); btn.innerHTML = '✓ 已下载'; btn.disabled = false;
-      ok++;
+      const j = await downloadToServer(urls[i]);
+      setAudioDone(btn, j); btn.disabled = false;
+      record(s, j);
     } catch (e) {
       setBtnLoading(btn, false);
-      fail++;
+      counts.fail++;
+      details.push(s.name + '：下载失败：' + e.message);
     }
   }
   fill.style.width = '100%';
-  ptext.textContent = `完成：成功 ${ok} 首${fail ? '，失败 ' + fail + ' 首（多为付费歌曲）' : ''}`;
-  toast(`批量下载完成（成功 ${ok}${fail ? '，失败 ' + fail : ''}），文件已保存到下载文件夹`);
+  const summary = audioBatchSummary(counts);
+  ptext.textContent = '完成：' + summary + (details.length ? '；' + details.join('；') : '');
+  toast(`批量下载完成（${summary}），文件已保存到下载文件夹`);
   refreshFiles();
 }
 
 /* ---------------- 链接解析 ---------------- */
-async function doParse(url) {
+async function doParse(url, source, generation) {
+  if (source !== 'qq') { showStatus('此平台仅支持关键词搜索，不解析 QQ / K歌链接。', true); return; }
   showStatus('<span class="spinner"></span>正在解析链接...');
   try {
     const j = await api('/api/parse', {
@@ -676,15 +1592,16 @@ async function doParse(url) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url })
     });
-    if (j.type === 'kg_song') renderKgSong(j.data);
+    if (!requestIsCurrent(source, generation)) return;
+    if (j.type === 'kg_song') renderKgSong(j.data, url);
     else if (j.type === 'kg_personal') renderKgPersonal(j.data);
     else if (j.type === 'qq_playlist') renderPlaylist(j.data);
   } catch (e) {
-    showStatus(esc(e.message), true);
+    if (requestIsCurrent(source, generation)) showStatus(esc(e.message), true);
   }
 }
 
-function renderKgSong(d) {
+function renderKgSong(d, sourceUrl) {
   result.innerHTML = `
     <div class="card">
       <div class="title-row">
@@ -700,7 +1617,7 @@ function renderKgSong(d) {
       </div>
     </div>`;
   $('#resultCount').textContent = 'K歌单曲';
-  const url = '/api/download_kg?url=' + encodeURIComponent(_lastInput);
+  const url = '/api/download_kg?url=' + encodeURIComponent(sourceUrl);
   $('#kgDl').onclick = function () { downloadSong(this, url); };
 }
 
@@ -734,7 +1651,7 @@ function renderKgPersonal(d) {
     const url = '/api/download_kg?url=' + encodeURIComponent('https://kg.qq.com/node/play?s=' + shareid);
     downloadSong(btn, url);
   };
-  $('#dlAll').onclick = () => downloadAllKg(d.works);
+  $('#dlAll').onclick = () => runResultBatch(() => downloadAllKg(d.works));
 }
 
 async function downloadAllKg(works) {
@@ -889,114 +1806,221 @@ window._cvFile = async (btn, name) => {
   }
 };
 
-/* ---------------- 登录设置 ---------------- */
-let _qrTask = null;
-let _qrTimer = null;
-let _qrBusy = false;
-
-function stopQrPolling() {
-  if (_qrTimer) { clearInterval(_qrTimer); _qrTimer = null; }
-}
-
-function qrText(status) {
-  return ({waiting: '请使用 QQ音乐 App 扫码', scanned: '已扫码，请在手机上确认登录',
-    success: '✓ 登录成功', expired: '二维码已过期，请重新扫码', cancelled: '已取消扫码',
-    failed: '登录失败，请重新扫码'})[status] || '正在等待扫码…';
-}
-
-function qrErrorText(error) {
-  if (!error) return '';
-  if (/网络|TLS|WebSocket|超时|连接断开/i.test(error)) return error + '（可检查网络后点击重新扫码）';
-  if (/拒绝|订阅|服务端/i.test(error)) return error + '（可稍后重试）';
-  return error;
-}
-
-async function refreshCookieStatus() {
-  try {
-    const j = await api('/api/cookie');
-    const el = $('#cookieStatus');
-    if (j.set) {
-      el.innerHTML = '✓ 已登录（QQ号 ' + esc(j.uin || '?') + '）';
-      $('#loginBtn').innerHTML = '🔑 已登录';
-    } else {
-      el.textContent = '未登录';
-      $('#loginBtn').innerHTML = '🔑 登录设置';
+/* ---------------- 独立扫码登录控制器 ---------------- */
+function createQrLogin(config) {
+  const panel = $(config.panel), image = $(config.image), hint = $(config.hint);
+  const countdown = $(config.countdown), status = $(config.status), button = $(config.button);
+  let task = null, timer = null, generation = 0, statusGeneration = 0, loggingOut = false;
+  const starts = new Set();
+  // Migu's HttpOnly owner cookie is browser-managed. Only its CSRF token lives
+  // in this controller's memory; never expose account cookies/tokens in storage.
+  let csrf = '';
+  const ownerOptions = config.migu ? { credentials: 'same-origin', cache: 'no-store' } : {};
+  let ownerStatus = null, ownerStatusGeneration = 0;
+  function getStatus() {
+    if (!config.migu) return api(config.statusUrl);
+    // Share the initial owner-cookie handshake: parallel first requests must
+    // not create two owners before the HttpOnly Set-Cookie is received.
+    const visit = _platformGeneration;
+    if (ownerStatus && ownerStatusGeneration !== visit) {
+      // Finish the previous owner-cookie handshake before requesting a fresh
+      // status for this visit, so late Set-Cookie cannot overwrite a new owner.
+      return ownerStatus.catch(() => {}).then(() => getStatus());
     }
-  } catch (e) {}
-}
-
-function renderQrStatus(j) {
-  $('#qrHint').textContent = qrErrorText(j.error) || qrText(j.status);
-  $('#qrCountdown').textContent = j.remaining > 0 ? ('二维码有效期约 ' + j.remaining + ' 秒') : '';
-  if (j.status === 'success') {
-    stopQrPolling();
-    refreshCookieStatus();
-    toast('扫码登录成功，搜索/下载功能已启用');
-    setTimeout(() => { $('#loginPanel').style.display = 'none'; }, 500);
+    if (!ownerStatus) {
+      ownerStatusGeneration = visit;
+      const pending = api(config.statusUrl, ownerOptions).finally(() => { if (ownerStatus === pending) ownerStatus = null; });
+      ownerStatus = pending;
+    }
+    return ownerStatus;
   }
-  if (['expired', 'cancelled', 'failed'].includes(j.status)) stopQrPolling();
-}
-
-async function pollQrStatus() {
-  if (!_qrTask) return;
-  try {
-    const j = await api('/api/login/qr/status?id=' + encodeURIComponent(_qrTask));
-    renderQrStatus(j);
-  } catch (e) {
-    stopQrPolling();
-    $('#qrHint').textContent = e.message || '登录状态获取失败';
+  async function ensureCsrf() {
+    if (!config.migu || csrf) return;
+    const visit = _platformGeneration;
+    const j = await getStatus();
+    if (visit !== _platformGeneration) throw new Error('登录页面已切换，请重新扫码');
+    if (!j.csrf || typeof j.csrf !== 'string') throw new Error('登录安全校验不可用，请刷新登录状态后重试');
+    csrf = j.csrf;
   }
-}
-
-async function startQrLogin() {
-  if (_qrBusy) return;
-  _qrBusy = true;
-  stopQrPolling();
-  $('#loginQr').style.display = 'none';
-  $('#qrHint').textContent = '正在获取二维码…';
-  $('#qrCountdown').textContent = '';
-  try {
-    const j = await api('/api/login/qr/start', {method: 'POST'});
-    _qrTask = j.id;
-    $('#loginQr').src = j.image;
-    $('#loginQr').style.display = 'block';
-    renderQrStatus(j);
-    _qrTimer = setInterval(pollQrStatus, 1500);
-  } catch (e) {
-    $('#qrHint').textContent = e.message || '获取二维码失败';
-  } finally { _qrBusy = false; }
-}
-
-async function cancelQrTask() {
-  stopQrPolling();
-  if (_qrTask) {
-    try { await api('/api/login/qr/cancel', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: _qrTask})}); } catch (e) {}
-    _qrTask = null;
+  async function post(url, body, keepalive = false) {
+    if (!config.migu) return api(url, { method: 'POST', ...(body ? { headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body), keepalive } : {}) });
+    await ensureCsrf();
+    return api(url, { ...ownerOptions, method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf}, body: JSON.stringify(body || {}), keepalive });
   }
+  const terminal = s => ['success', 'expired', 'cancelled', 'failed', 'error'].includes(s);
+  function stop() { clearTimeout(timer); timer = null; }
+  function current(token) { return generation === token && panel.style.display !== 'none' && !loggingOut; }
+  async function cancelRemote(id) {
+    if (!id) return;
+    try {
+      await post(config.base + '/qr/cancel', {id}, true);
+    } catch (e) { /* Cancellation is best-effort, never revive a stale task. */ }
+  }
+  async function cancel() {
+    generation++;
+    stop();
+    const id = task;
+    task = null;
+    image.style.display = 'none';
+    image.removeAttribute('src');
+    countdown.textContent = '';
+    // A pending start cancels its returned task itself before this resolves.
+    await Promise.all([cancelRemote(id), ...starts]);
+  }
+  async function refreshStatus() {
+    const token = ++statusGeneration;
+    const visit = _platformGeneration;
+    const currentStatus = () => token === statusGeneration && !loggingOut && (!config.migu || visit === _platformGeneration);
+    try {
+      const j = await getStatus();
+      if (!currentStatus()) return null;
+      if (config.migu && typeof j.csrf === 'string') csrf = j.csrf;
+      if (j.set) {
+        const nickname = j.account?.nickname || j.nickname;
+        status.textContent = config.migu
+          ? '咪咕已登录' + (j.nickname ? '（' + j.nickname + '）' : '') + '；仅保存在服务内存，重启需重新扫码。下载仍须账号权益及版权许可。'
+          : config.netease
+          ? '已保存网易云登录信息' + (nickname ? '（' + nickname + '）' : '') + '；下载仍取决于账号权益及版权许可。'
+          : '已保存登录信息（QQ号 ' + (j.uin || '?') + '）；若搜索失败请重新扫码。';
+        button.textContent = config.name + ' · 已登录';
+      } else {
+        status.textContent = config.migu ? '未登录咪咕：请用自己的咪咕官方客户端 扫码；登录仅保存在服务内存，重启需重新扫码。' : config.netease ? '未登录网易云：可匿名搜索，下载需要相应账号权益。' : '首次使用请用自己的 QQ音乐 App 扫码登录，然后搜索歌曲。';
+        button.textContent = config.name + ' · 扫码登录';
+      }
+      return j;
+    } catch (e) {
+      if (currentStatus()) status.textContent = '登录状态检查失败：' + e.message;
+      return null;
+    }
+  }
+  function render(j, token) {
+    if (!current(token)) return;
+    const messages = {
+      waiting: config.migu ? '请使用咪咕官方客户端扫码，并按手机提示确认' : '请使用 ' + config.name + ' App 扫码',
+      scanned: '已扫码，请在手机上确认登录',
+      success: '登录成功', expired: '二维码已过期，请点击重新扫码',
+      cancelled: '已取消扫码', failed: '登录失败，请重新扫码', error: '登录失败，请重新扫码'
+    };
+    hint.textContent = j.message || j.error || messages[j.status] || '正在等待扫码…';
+    const remaining = config.migu ? j.expires_in : j.remaining;
+    countdown.textContent = remaining > 0 && !terminal(j.status) ? '二维码有效期约 ' + remaining + ' 秒' : '';
+    if (terminal(j.status)) {
+      stop();
+      image.style.display = 'none';
+      if (j.status === 'success') {
+        refreshStatus();
+        toast(config.name + '登录成功；下载仍需相应账号权益及版权许可');
+      }
+    }
+  }
+  async function poll(token, id) {
+    if (!current(token) || id !== task) return;
+    try {
+      const j = await api(config.base + '/qr/status?id=' + encodeURIComponent(id), ownerOptions);
+      if (!current(token) || id !== task) return;
+      render(j, token);
+      if (!terminal(j.status)) timer = setTimeout(() => poll(token, id), 1500);
+    } catch (e) {
+      if (current(token) && id === task) {
+        hint.textContent = e.message || '登录状态获取失败，请重新扫码';
+        stop();
+      }
+    }
+  }
+  async function start() {
+    if (loggingOut || panel.style.display === 'none') return;
+    const cancelled = cancel();
+    const token = generation;
+    hint.textContent = '正在获取二维码…';
+    await cancelled;
+    if (!current(token)) return;
+    // Track the full start/cancel lifecycle so logout waits for orphan cleanup.
+    const pending = (async () => {
+      await ensureCsrf();
+      if (!current(token)) return null;
+      return post(config.base + '/qr/start');
+    })().then(async j => {
+      if (!j) return;
+      if (!current(token)) { await cancelRemote(j.id); return; }
+      // Commit without an await gap: close/logout must either see this task or
+      // wait for its stale-start cancellation, never miss an orphan in between.
+      task = j.id;
+      const qr = config.migu ? j.qr : j.image;
+      if (config.migu && !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(qr || '')) {
+        task = null;
+        await cancelRemote(j.id);
+        if (current(token)) hint.textContent = '二维码格式无效，请重新扫码';
+        return;
+      }
+      if (qr) { image.src = qr; image.style.display = 'block'; }
+      render(j, token);
+      if (!terminal(j.status)) timer = setTimeout(() => poll(token, j.id), 1500);
+    }).catch(e => {
+      if (current(token)) hint.textContent = e.message || '获取二维码失败';
+    });
+    starts.add(pending);
+    await pending;
+    starts.delete(pending);
+  }
+  function open() {
+    panel.style.display = 'block';
+    refreshStatus();
+    start();
+  }
+  async function close() {
+    if (config.migu) statusGeneration++;
+    panel.style.display = 'none';
+    hint.textContent = '已关闭扫码，点击重新扫码获取二维码';
+    await cancel();
+  }
+  button.onclick = () => panel.style.display === 'none' ? open() : close();
+  $(config.refresh).onclick = start;
+  $(config.close).onclick = close;
+  $(config.logout).onclick = async () => {
+    if (loggingOut) return;
+    loggingOut = true;
+    const logoutStatus = ++statusGeneration;
+    const visit = _platformGeneration;
+    const visibleLogout = () => !config.migu || (visit === _platformGeneration && logoutStatus === statusGeneration && panel.style.display !== 'none');
+    $(config.refresh).disabled = true;
+    try {
+      await cancel();
+      await post(config.logoutUrl);
+      if (config.migu) ownerStatus = null; // Never reuse a status begun before logout.
+      if (visibleLogout()) {
+        hint.textContent = '已退出登录，需要时点击重新扫码';
+        toast('已退出' + config.name + '登录，本机登录信息已清除');
+      }
+    } catch (e) { if (visibleLogout()) toast(e.message, true); }
+    finally {
+      loggingOut = false;
+      $(config.refresh).disabled = false;
+      if (visibleLogout()) refreshStatus();
+    }
+  };
+  window.addEventListener('pagehide', close);
+  return {open, close, refreshStatus};
 }
-
-$('#loginBtn').onclick = async () => {
-  const p = $('#loginPanel');
-  const opening = p.style.display === 'none';
-  p.style.display = opening ? 'block' : 'none';
-  if (opening) startQrLogin();
-  else await cancelQrTask();
-};
-$('#qrRefresh').onclick = startQrLogin;
-$('#qrCancel').onclick = async () => {
-  await cancelQrTask();
-  $('#loginPanel').style.display = 'none';
-};
-window.addEventListener('pagehide', () => { cancelQrTask(); });
-$('#cookieClear').onclick = async () => {
-  try {
-    await api('/api/logout', {method: 'POST'});
-    stopQrPolling();
-    _qrTask = null;
-    toast('已退出登录，本机登录信息已清除');
-    refreshCookieStatus();
-  } catch (e) { toast(e.message, true); }
-};
+const qqLogin = createQrLogin({
+  name: 'QQ音乐', base: '/api/login', statusUrl: '/api/cookie', logoutUrl: '/api/logout',
+  panel: '#loginPanel', image: '#loginQr', hint: '#qrHint', countdown: '#qrCountdown',
+  status: '#cookieStatus', button: '#loginBtn', refresh: '#qrRefresh', close: '#qrCancel', logout: '#cookieClear'
+});
+const neteaseLogin = createQrLogin({
+  name: '网易云音乐', netease: true, base: '/api/netease/login',
+  statusUrl: '/api/netease/login/status', logoutUrl: '/api/netease/logout',
+  panel: '#neteaseLoginPanel', image: '#neteaseLoginQr', hint: '#neteaseQrHint', countdown: '#neteaseQrCountdown',
+  status: '#neteaseCookieStatus', button: '#neteaseLoginBtn', refresh: '#neteaseQrRefresh', close: '#neteaseQrCancel', logout: '#neteaseLogout'
+});
+const miguLogin = createQrLogin({
+  name: '咪咕音乐', migu: true, base: '/api/migu/login',
+  statusUrl: '/api/migu/login/status', logoutUrl: '/api/migu/login/logout',
+  panel: '#miguLoginPanel', image: '#miguLoginQr', hint: '#miguQrHint', countdown: '#miguQrCountdown',
+  status: '#miguCookieStatus', button: '#miguLoginBtn', refresh: '#miguQrRefresh', close: '#miguQrCancel', logout: '#miguLogout'
+});
+$('#miguStatusRefresh').onclick = () => miguLogin.refreshStatus();
+function openQqLogin() { if (_source === 'qq') qqLogin.open(); }
+function closeQqLogin() { return qqLogin.close(); }
 
 /* ---------------- 人声分离（原生功能） ---------------- */
 let _vocalBusy = false;
@@ -1012,51 +2036,50 @@ function refreshVocalFileOptions(files) {
 }
 
 async function refreshVocal() {
+  const tag = $('#vocalState');
+  const status = $('#vocalSetupStatus');
   try {
     const j = await api('/api/vocal/status');
-    const tag = $('#vocalState');
     const setup = j.setup || {};
-    const body = document.getElementById('vocalInputs');
-    if (!setup.tool_found) {
-      // 工具未安装：显示下载入口或下载进度
+    const ready = Boolean(j.running && setup.tool_found);
+    const pending = setup.downloading || (setup.tool_found && !ready && !setup.error);
+    $('#vocalInputs').style.display = ready ? '' : 'none';
+    status.style.display = ready && !setup.error ? 'none' : '';
+    tag.className = 'tag ' + (ready ? 'free' : 'vip');
+    if (setup.downloading) {
+      tag.textContent = 'AI安装中';
+      const progress = Math.max(0, Math.min(100, Number(setup.progress) || 0));
+      const bytes = setup.total_bytes ? `（${fmtSize(setup.downloaded_bytes || 0)} / ${fmtSize(setup.total_bytes)}）` : '';
+      status.innerHTML = `<div class="progress-bar"><div class="fill" style="width:${progress}%"></div></div>
+        <div class="progress-text">${esc(setup.stage)} ${progress}% ${bytes}</div>`;
+    } else if (setup.error) {
+      tag.textContent = ready ? 'AI就绪' : 'AI安装/启动失败';
+      status.innerHTML = `<div class="empty">${esc(setup.error)}<br>
+        <span style="font-size:12px">详细记录：数据目录下 AI-install.log / AI-engine.log</span><br>
+        <button class="btn primary" style="margin-top:10px" onclick="window._vocalSetup()">${setup.tool_found ? '重试启动' : '重试下载/安装'}</button></div>`;
+    } else if (!setup.tool_found) {
       tag.textContent = 'AI组件未装';
-      tag.className = 'tag vip';
-      if (setup.downloading) {
-        if (body) body.innerHTML = `
-          <div style="padding:14px 4px">
-            <div class="progress-bar"><div class="fill" style="width:${setup.progress}%"></div></div>
-            <div class="progress-text">${esc(setup.stage)} ${setup.progress}%</div>
-          </div>`;
-        if (!_vocalSetupTimer) _vocalSetupTimer = setInterval(refreshVocal, 2000);
-      } else if (setup.error) {
-        if (body) body.innerHTML = `
-          <div class="empty">安装失败：${esc(setup.error)}<br>
-          <button class="btn primary" style="margin-top:10px" onclick="window._vocalSetup()">重试下载</button></div>`;
-        if (_vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
-      } else {
-        if (body) body.innerHTML = `
-          <div class="empty">
-            首次使用需下载 AI 组件（749MB，仅需一次）<br>
-            <button class="btn primary" style="margin-top:10px" onclick="window._vocalSetup()">📥 下载AI组件</button>
-          </div>`;
-        if (_vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
-      }
-      return;
+      status.innerHTML = `<div class="empty">首次使用需下载 AI 组件（约749MB，仅需一次）。<br>
+        下载失败可重试，支持续传；需要能访问 GitHub。<br>
+        <button class="btn primary" style="margin-top:10px" onclick="window._vocalSetup()">📥 下载AI组件</button></div>`;
+    } else {
+      tag.textContent = ready ? 'AI就绪' : 'AI启动中';
+      status.innerHTML = ready ? '' : '<div class="empty">正在启动 AI 引擎，请稍候…<br><button class="btn" onclick="window._vocalSetup()">重试启动</button></div>';
     }
-    if (_vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
-    tag.textContent = j.running ? 'AI就绪' : 'AI启动中';
-    tag.className = 'tag ' + (j.running ? 'free' : 'vip');
-    if (!j.running && !document.getElementById('vocalFile')) {
-      setTimeout(refreshVocal, 3000);
-    }
-  } catch (e) { /* 静默 */ }
+    if (pending && !_vocalSetupTimer) _vocalSetupTimer = setInterval(refreshVocal, 2000);
+    if (!pending && _vocalSetupTimer) { clearInterval(_vocalSetupTimer); _vocalSetupTimer = null; }
+  } catch (e) {
+    tag.textContent = 'AI状态获取失败';
+    status.style.display = '';
+    status.innerHTML = `<div class="empty">${esc(e.message)}<br><button class="btn" onclick="refreshVocal()">刷新状态</button></div>`;
+  }
 }
 
 window._vocalSetup = async () => {
   try {
-    await api('/api/vocal/setup', { method: 'POST' });
-    toast('开始下载 AI 组件（749MB），请耐心等待');
-    refreshVocal();
+    const j = await api('/api/vocal/setup', { method: 'POST' });
+    toast(j.action === 'ready' ? 'AI引擎已就绪' : j.action === 'busy' ? '安装或启动正在进行，请稍候' : '已开始安装或启动 AI 组件');
+    await refreshVocal();
   } catch (e) { toast(e.message, true); }
 };
 
@@ -1120,21 +2143,39 @@ $('#vocalUpload').onchange = (e) => {
 
 /* ---------------- 入口 ---------------- */
 function go() {
+  if (_batchBusy) { toast('批量下载进行中，请完成后再搜索或切换平台', true); return; }
   const v = input.value.trim();
   if (!v) { toast('请输入关键词或链接', true); return; }
-  _lastInput = v;
-  goBtn.disabled = true;
-  setTimeout(() => goBtn.disabled = false, 500);
-  if (/https?:\/\//i.test(v)) doParse(v);
-  else doSearch(v);
+  const source = _source;
+  const generation = ++_searchGeneration;
+  $('#resultCount').textContent = '';
+  if (source === 'other') return searchOther(v);
+  if (/https?:\/\//i.test(v)) {
+    if (source !== 'qq') {
+      showStatus(esc(providerFor(source).name) + '当前仅支持关键词搜索；如需解析 QQ歌单 / 全民K歌链接，请切换到 QQ音乐 / 全民K歌。', true);
+      return;
+    }
+    doParse(v, source, generation);
+  } else doSearch(v, source, generation);
 }
 goBtn.onclick = go;
 input.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
 $('#openFolderBtn').onclick = openFolder;
 $('#clearFilesBtn').onclick = clearFiles;
 
+async function initializeLogin() {
+  const platformGeneration = _platformGeneration;
+  const searchGeneration = _searchGeneration;
+  const j = await qqLogin.refreshStatus();
+  // Never interrupt a user who selected NetEase or started searching during init.
+  if (j && !j.set && _source === 'qq' && platformGeneration === _platformGeneration && searchGeneration === _searchGeneration) {
+    openQqLogin();
+  }
+}
+
 refreshFiles();
-refreshCookieStatus();
+initializeLogin();
+neteaseLogin.refreshStatus();
 refreshVip();
 refreshVocal();
 </script>

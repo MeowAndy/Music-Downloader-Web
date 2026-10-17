@@ -427,6 +427,17 @@ def render(mid: str, fmt='txt', include_translation=False, include_romanization=
     if fmt not in ('txt', 'lrc'):
         raise LyricError('歌词格式只支持 txt 或 lrc')
     doc = get_document(mid, force=force)
+    return render_document(doc, fmt, include_translation, include_romanization, preview)
+
+
+def render_document(doc: LyricDocument, fmt='txt', include_translation=False,
+                    include_romanization=False, preview=False, *, source='qq') -> dict[str, Any]:
+    """Render a provider document; preserve the legacy QQ response identity."""
+    fmt = (fmt or 'txt').lower()
+    if fmt not in ('txt', 'lrc'):
+        raise LyricError('歌词格式只支持 txt 或 lrc')
+    identity = ({'mid': doc.mid, 'songid': doc.song_id} if source == 'qq'
+                else {'source': source, 'id': str(doc.song_id)})
     content = (doc.render_lrc if fmt == 'lrc' else doc.render_txt)(
         include_translation, include_romanization)
     sections = doc.plain_sections(include_translation, include_romanization)
@@ -437,8 +448,7 @@ def render(mid: str, fmt='txt', include_translation=False, include_romanization=
         sections = {key: _truncate(value, max_chars=900, max_lines=20)[0]
                     for key, value in sections.items() if value}
     return {
-        'mid': doc.mid,
-        'songid': doc.song_id,
+        **identity,
         'format': fmt,
         'content': content,
         'sections': sections,

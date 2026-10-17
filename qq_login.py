@@ -456,6 +456,9 @@ def _login_with_qr(qrcode_id: str, uin: str, key: str) -> dict[str, Any]:
     code = body.get('code', 0)
     if code not in (0, '0'):
         raise QRLoginError('QQ音乐登录失败（错误码 %s）' % code)
+    node_code = (body.get('req_0') or {}).get('code', 0)
+    if node_code not in (0, '0'):
+        raise QRLoginError('QQ音乐登录被拒绝（错误码 %s）' % node_code)
     data = _response_data(body)
     return data if isinstance(data, dict) else {}
 

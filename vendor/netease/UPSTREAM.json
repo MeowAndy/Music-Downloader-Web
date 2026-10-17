@@ -1,0 +1,501 @@
+{
+  "upstream": "https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced",
+  "commit": "2db6684453297ee86dec0492842f2320b08182d9",
+  "version": "4.41.1",
+  "additional_modules": {
+    "module/lyric.js": {
+      "commit": "2db6684453297ee86dec0492842f2320b08182d9",
+      "sha256": "81fca426eaf9f682aa4c5b7bee66c365ec40793d2f94b4f02ea45fd45e347409",
+      "modified": false
+    }
+  },
+  "dependencies": [
+    {
+      "name": "axios",
+      "version": "1.20.0"
+    },
+    {
+      "name": "crypto-js",
+      "version": "4.2.0"
+    },
+    {
+      "name": "node-forge",
+      "version": "1.4.0"
+    },
+    {
+      "name": "fzstd",
+      "version": "0.1.1"
+    },
+    {
+      "name": "pac-proxy-agent",
+      "version": "7.2.0"
+    },
+    {
+      "name": "tunnel",
+      "version": "0.0.6"
+    },
+    {
+      "name": "jsdom",
+      "version": "24.1.3"
+    },
+    {
+      "name": "qrcode",
+      "version": "1.5.4"
+    },
+    {
+      "name": "follow-redirects",
+      "version": "1.16.0"
+    },
+    {
+      "name": "form-data",
+      "version": "4.0.6"
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "5.0.1"
+    },
+    {
+      "name": "proxy-from-env",
+      "version": "2.1.0"
+    },
+    {
+      "name": "@tootallnate/quickjs-emscripten",
+      "version": "0.23.0"
+    },
+    {
+      "name": "agent-base",
+      "version": "7.1.4"
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3"
+    },
+    {
+      "name": "get-uri",
+      "version": "6.0.5"
+    },
+    {
+      "name": "http-proxy-agent",
+      "version": "7.0.2"
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "7.0.6"
+    },
+    {
+      "name": "pac-resolver",
+      "version": "7.0.1"
+    },
+    {
+      "name": "socks-proxy-agent",
+      "version": "8.0.5"
+    },
+    {
+      "name": "cssstyle",
+      "version": "4.6.0"
+    },
+    {
+      "name": "data-urls",
+      "version": "5.0.0"
+    },
+    {
+      "name": "decimal.js",
+      "version": "10.6.0"
+    },
+    {
+      "name": "html-encoding-sniffer",
+      "version": "4.0.0"
+    },
+    {
+      "name": "is-potential-custom-element-name",
+      "version": "1.0.1"
+    },
+    {
+      "name": "nwsapi",
+      "version": "2.2.28"
+    },
+    {
+      "name": "parse5",
+      "version": "7.3.0"
+    },
+    {
+      "name": "rrweb-cssom",
+      "version": "0.7.1"
+    },
+    {
+      "name": "saxes",
+      "version": "6.0.0"
+    },
+    {
+      "name": "symbol-tree",
+      "version": "3.2.4"
+    },
+    {
+      "name": "tough-cookie",
+      "version": "4.1.4"
+    },
+    {
+      "name": "w3c-xmlserializer",
+      "version": "5.0.0"
+    },
+    {
+      "name": "webidl-conversions",
+      "version": "7.0.0"
+    },
+    {
+      "name": "whatwg-encoding",
+      "version": "3.1.1"
+    },
+    {
+      "name": "whatwg-mimetype",
+      "version": "4.0.0"
+    },
+    {
+      "name": "whatwg-url",
+      "version": "14.2.0"
+    },
+    {
+      "name": "ws",
+      "version": "8.22.0"
+    },
+    {
+      "name": "xml-name-validator",
+      "version": "5.0.0"
+    },
+    {
+      "name": "dijkstrajs",
+      "version": "1.0.3"
+    },
+    {
+      "name": "pngjs",
+      "version": "5.0.0"
+    },
+    {
+      "name": "yargs",
+      "version": "15.4.1"
+    },
+    {
+      "name": "asynckit",
+      "version": "0.4.0"
+    },
+    {
+      "name": "combined-stream",
+      "version": "1.0.8"
+    },
+    {
+      "name": "es-set-tostringtag",
+      "version": "2.1.0"
+    },
+    {
+      "name": "hasown",
+      "version": "2.0.4"
+    },
+    {
+      "name": "mime-types",
+      "version": "2.1.35"
+    },
+    {
+      "name": "agent-base",
+      "version": "6.0.2"
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3"
+    },
+    {
+      "name": "basic-ftp",
+      "version": "5.3.1"
+    },
+    {
+      "name": "data-uri-to-buffer",
+      "version": "6.0.2"
+    },
+    {
+      "name": "degenerator",
+      "version": "5.0.1"
+    },
+    {
+      "name": "netmask",
+      "version": "2.1.1"
+    },
+    {
+      "name": "socks",
+      "version": "2.8.10"
+    },
+    {
+      "name": "@asamuzakjp/css-color",
+      "version": "3.2.0"
+    },
+    {
+      "name": "rrweb-cssom",
+      "version": "0.8.0"
+    },
+    {
+      "name": "entities",
+      "version": "6.0.1"
+    },
+    {
+      "name": "xmlchars",
+      "version": "2.2.0"
+    },
+    {
+      "name": "psl",
+      "version": "1.15.0"
+    },
+    {
+      "name": "punycode",
+      "version": "2.3.1"
+    },
+    {
+      "name": "universalify",
+      "version": "0.2.0"
+    },
+    {
+      "name": "url-parse",
+      "version": "1.5.10"
+    },
+    {
+      "name": "iconv-lite",
+      "version": "0.6.3"
+    },
+    {
+      "name": "tr46",
+      "version": "5.1.1"
+    },
+    {
+      "name": "cliui",
+      "version": "6.0.0"
+    },
+    {
+      "name": "decamelize",
+      "version": "1.2.0"
+    },
+    {
+      "name": "find-up",
+      "version": "4.1.0"
+    },
+    {
+      "name": "get-caller-file",
+      "version": "2.0.5"
+    },
+    {
+      "name": "require-directory",
+      "version": "2.1.1"
+    },
+    {
+      "name": "require-main-filename",
+      "version": "2.0.0"
+    },
+    {
+      "name": "set-blocking",
+      "version": "2.0.0"
+    },
+    {
+      "name": "string-width",
+      "version": "4.2.3"
+    },
+    {
+      "name": "which-module",
+      "version": "2.0.1"
+    },
+    {
+      "name": "y18n",
+      "version": "4.0.3"
+    },
+    {
+      "name": "yargs-parser",
+      "version": "18.1.3"
+    },
+    {
+      "name": "delayed-stream",
+      "version": "1.0.0"
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0"
+    },
+    {
+      "name": "get-intrinsic",
+      "version": "1.3.0"
+    },
+    {
+      "name": "has-tostringtag",
+      "version": "1.0.2"
+    },
+    {
+      "name": "function-bind",
+      "version": "1.1.2"
+    },
+    {
+      "name": "mime-db",
+      "version": "1.52.0"
+    },
+    {
+      "name": "ast-types",
+      "version": "0.13.4"
+    },
+    {
+      "name": "escodegen",
+      "version": "2.1.0"
+    },
+    {
+      "name": "esprima",
+      "version": "4.0.1"
+    },
+    {
+      "name": "ip-address",
+      "version": "10.7.2"
+    },
+    {
+      "name": "smart-buffer",
+      "version": "4.2.0"
+    },
+    {
+      "name": "@csstools/css-calc",
+      "version": "2.1.4"
+    },
+    {
+      "name": "@csstools/css-color-parser",
+      "version": "3.1.0"
+    },
+    {
+      "name": "@csstools/css-parser-algorithms",
+      "version": "3.0.5"
+    },
+    {
+      "name": "@csstools/css-tokenizer",
+      "version": "3.0.4"
+    },
+    {
+      "name": "lru-cache",
+      "version": "10.4.3"
+    },
+    {
+      "name": "querystringify",
+      "version": "2.2.0"
+    },
+    {
+      "name": "requires-port",
+      "version": "1.0.0"
+    },
+    {
+      "name": "safer-buffer",
+      "version": "2.1.2"
+    },
+    {
+      "name": "strip-ansi",
+      "version": "6.0.1"
+    },
+    {
+      "name": "wrap-ansi",
+      "version": "6.2.0"
+    },
+    {
+      "name": "locate-path",
+      "version": "5.0.0"
+    },
+    {
+      "name": "path-exists",
+      "version": "4.0.0"
+    },
+    {
+      "name": "emoji-regex",
+      "version": "8.0.0"
+    },
+    {
+      "name": "is-fullwidth-code-point",
+      "version": "3.0.0"
+    },
+    {
+      "name": "camelcase",
+      "version": "5.3.1"
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "version": "1.0.2"
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1"
+    },
+    {
+      "name": "es-object-atoms",
+      "version": "1.1.2"
+    },
+    {
+      "name": "get-proto",
+      "version": "1.0.1"
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0"
+    },
+    {
+      "name": "has-symbols",
+      "version": "1.1.0"
+    },
+    {
+      "name": "math-intrinsics",
+      "version": "1.1.0"
+    },
+    {
+      "name": "tslib",
+      "version": "2.8.1"
+    },
+    {
+      "name": "estraverse",
+      "version": "5.3.0"
+    },
+    {
+      "name": "esutils",
+      "version": "2.0.3"
+    },
+    {
+      "name": "source-map",
+      "version": "0.6.1"
+    },
+    {
+      "name": "@csstools/color-helpers",
+      "version": "5.1.0"
+    },
+    {
+      "name": "ansi-regex",
+      "version": "5.0.1"
+    },
+    {
+      "name": "ansi-styles",
+      "version": "4.3.0"
+    },
+    {
+      "name": "p-locate",
+      "version": "4.1.0"
+    },
+    {
+      "name": "dunder-proto",
+      "version": "1.0.1"
+    },
+    {
+      "name": "color-convert",
+      "version": "2.0.1"
+    },
+    {
+      "name": "p-limit",
+      "version": "2.3.0"
+    },
+    {
+      "name": "color-name",
+      "version": "1.1.4"
+    },
+    {
+      "name": "p-try",
+      "version": "2.2.0"
+    }
+  ],
+  "excluded": [
+    "unblockmusic-utils",
+    "song_url_v1",
+    "server",
+    "main",
+    "generateConfig"
+  ]
+}

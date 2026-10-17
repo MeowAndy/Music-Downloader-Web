@@ -1,0 +1,4 @@
+# Preserve upstream source and license formatting.
+vendor/** -whitespace conflict-marker-size=32
+licenses/** -whitespace
+tests/fixtures/** -whitespace

@@ -1,5 +1,7 @@
 # 本地私有数据（绝不上传）
 qq_cookie.txt
+netease-auth.json
+.netease-auth-*.tmp
 vip_state.json
 format_settings.json
 lyrics_cache.json
@@ -7,16 +9,33 @@ lyrics_cache.json.tmp
 lyrics_cache.tmp
 server.log
 selftest_run.log
+startup-report.json
+portable-test-*/
+AI-install.log
+AI-engine.log
+AI-install-state.json
+vocal-separate/
+vocal-separate.7z*
+.vocal-install-*/
+.vocal-staging-*/
+AI-install-state.*.tmp
 
 # 下载输出
 output/
 
 # 大体积二进制（打包时内置进 exe，源码运行请自行放入）
-bin/
+/bin/
 
 # Python
 __pycache__/
 *.pyc
-build/
-dist/
+/build/
+/dist/
+/vendor/netease/node_modules/nwsapi/dist/lint.log
 *.spec
+!MusicDownloaderWeb.spec
+release-artifacts/
+.startup-report-*.tmp
+.startup-probe-*
+*.jks
+*.keystore

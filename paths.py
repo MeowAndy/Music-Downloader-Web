@@ -4,19 +4,35 @@
 - RES_DIR: 只读资源（static/vendor/bin），打包后在解包目录
 - APP_DIR: 可写数据（output/设置文件），打包后在 exe 旁边
 """
+import os
 import shutil
 import sys
+import tempfile
 from pathlib import Path
+
+def writable_dir(directory):
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryFile(dir=directory):
+            pass
+        return True
+    except OSError:
+        return False
+
 
 if getattr(sys, 'frozen', False):
     RES_DIR = Path(sys._MEIPASS)
-    APP_DIR = Path(sys.executable).parent
+    EXE_DIR = Path(sys.executable).parent
+    APP_DIR = EXE_DIR
+    if not writable_dir(APP_DIR) or not writable_dir(APP_DIR / 'output'):
+        APP_DIR = Path(os.environ.get('LOCALAPPDATA') or Path.home()) / 'MusicDownloaderWeb'
 else:
     RES_DIR = Path(__file__).parent
+    EXE_DIR = RES_DIR
     APP_DIR = RES_DIR
 
 OUTPUT_DIR = APP_DIR / 'output'
-OUTPUT_DIR.mkdir(exist_ok=True)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # 外部工具的查找位置（打包内置优先，其次 exe 旁 bin/，最后 PATH）
 _BIN_CANDIDATES = [RES_DIR / 'bin', APP_DIR / 'bin']
