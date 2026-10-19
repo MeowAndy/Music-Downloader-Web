@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 import paths
+import owned_processes
 
 BASE_DIR = paths.APP_DIR
 OUTPUT_DIR = paths.OUTPUT_DIR
@@ -53,7 +54,7 @@ def convert_file(src: Path, fmt: str = 'mp3'):
         raise RuntimeError('不支持的格式: %s' % fmt)
     cmd += ['-loglevel', 'error', str(out)]
     try:
-        r = subprocess.run(cmd, capture_output=True, timeout=600)
+        r = owned_processes.run(cmd, capture_output=True, timeout=600)
     except subprocess.TimeoutExpired:
         raise RuntimeError('转换超时')
     if r.returncode != 0 or not out.is_file() or out.stat().st_size < 1024:

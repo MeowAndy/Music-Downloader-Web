@@ -25,6 +25,7 @@ from pathlib import Path
 import requests
 
 import paths
+import owned_processes
 
 BASE_DIR = paths.APP_DIR
 OUTPUT_DIR = paths.OUTPUT_DIR
@@ -58,6 +59,9 @@ THREADS_ENV = 'MUSIC_DOWNLOADER_AI_THREADS'
 STARTUP_TIMEOUT = 180
 _state_lock = threading.RLock()
 _engine_lock = threading.Lock()
+# Shutdown never takes _engine_lock: it may be held for the full readiness wait.
+_launch_lock = threading.RLock()
+_cancel_event = threading.Event()
 _engine_process = None
 _setup_thread = None
 
@@ -77,6 +81,7 @@ _ERRORS = {
     'io': '本地文件操作失败；请检查权限、磁盘空间和 AI-engine.log。',
     'unexpected': '安装或启动失败；请检查依赖和 AI-engine.log 后重试。',
     'interrupted': '上次安装或启动被中断；可重试，已保留下载文件。',
+    'cancelled': '应用正在关闭，已取消 AI 安装或启动。',
 }
 
 
@@ -232,48 +237,88 @@ def _port_in_use():
         return s.connect_ex(('127.0.0.1', VOCAL_PORT)) == 0
 
 
+def _check_cancelled():
+    if _cancel_event.is_set():
+        raise InstallerError('cancelled')
+
+
+def shutdown():
+    """Cancel future work and stop only our engine tree; never wait for startup.
+
+    The launch lock covers just process creation/publication, not HTTP readiness
+    or the 180-second engine lock. A reused external service has no owned handle.
+    Call before owned_processes.close() during desktop teardown. Terminal.
+    """
+    global _engine_process
+    _cancel_event.set()
+    with _launch_lock:
+        process, _engine_process = _engine_process, None
+        if process is not None:
+            owned_processes.terminate(process)
+
+
 def _start_hidden():
     """Return the owned process; retain engine output, suppress console/browser windows."""
-    env = os.environ.copy()
-    env['BROWSER'] = str(paths.RES_DIR / 'vendor' / 'nop.cmd')
-    with (BASE_DIR / 'AI-engine.log').open('ab') as log:
-        return subprocess.Popen(
-            [str(VOCAL_EXE)], cwd=str(VOCAL_TOOL_DIR), env=env,
-            creationflags=0x08000000 if os.name == 'nt' else 0,
-            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+    with _launch_lock:
+        _check_cancelled()
+        env = os.environ.copy()
+        env['BROWSER'] = str(paths.RES_DIR / 'vendor' / 'nop.cmd')
+        with (BASE_DIR / 'AI-engine.log').open('ab') as log:
+            return owned_processes.popen(
+                [str(VOCAL_EXE)], cwd=str(VOCAL_TOOL_DIR), env=env, own_tree=True,
+                stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
 
 
 def ensure_running():
     """Serialize startup, reuse a still-live owned process, wait up to 180 seconds."""
     global _engine_process
-    with _engine_lock:
+    _check_cancelled()
+    while not _engine_lock.acquire(timeout=0.1):
+        _check_cancelled()
+    try:
         try:
-            if running():
+            _check_cancelled()
+            ready = running()
+            _check_cancelled()
+            if ready:
                 _update_state(persist=True, stage='完成', error='', error_code='')
                 return
             _refresh_tool()
             if not VOCAL_EXE:
                 raise InstallerError('missing')
+            # Do slow port/HTTP checks outside the lock shutdown needs.
             if _engine_process is None or _engine_process.poll() is not None:
                 if _port_in_use():
                     raise InstallerError('port')
                 _update_state(persist=True, stage='启动AI引擎', error='', error_code='')
                 _log('engine-start')
-                _engine_process = _start_hidden()
+                with _launch_lock:
+                    _check_cancelled()
+                    if _engine_process is not None:
+                        # A launcher can exit while its owned descendants remain.
+                        owned_processes.terminate(_engine_process)
+                    _engine_process = _start_hidden()
+            process = _engine_process
             deadline = time.monotonic() + STARTUP_TIMEOUT
             while time.monotonic() < deadline:
-                if _engine_process.poll() is not None:
+                _check_cancelled()
+                if process.poll() is not None:
                     raise InstallerError('exit')
-                remaining = deadline - time.monotonic()
-                if running(timeout=(min(1, remaining), min(2, remaining))):
+                remaining = max(0.001, deadline - time.monotonic())
+                ready = running(timeout=(min(1, remaining), min(2, remaining)))
+                _check_cancelled()
+                if ready:
                     _update_state(persist=True, stage='完成', error='', error_code='')
                     _log('engine-ready')
                     return
-                time.sleep(min(0.5, max(0, deadline - time.monotonic())))
+                _cancel_event.wait(min(0.5, max(0, deadline - time.monotonic())))
+            _check_cancelled()
             raise InstallerError('timeout')
         except Exception as exc:
             _failure(exc)
             raise InstallerError(_error_code(exc)) from None
+    finally:
+        _engine_lock.release()
 
 
 def _release_size(session):
@@ -476,6 +521,7 @@ def _fetch_chunk(session, path, url, start, end, expected, report):
         received = 0
         with path.open('ab' if have else 'wb') as stream:
             for piece in response.iter_content(1024 * 1024):
+                _check_cancelled()
                 if not piece:
                     continue
                 if received + len(piece) > want:
@@ -592,6 +638,7 @@ def _download_sequential(session, part, source, offset, expected):
         with part.open('ab' if offset else 'wb') as f:
             _update_state(downloaded_bytes=offset)
             for chunk in response.iter_content(1024 * 1024):
+                _check_cancelled()
                 if not chunk:
                     continue
                 if received + len(chunk) > response_size:
@@ -629,6 +676,7 @@ def _download_archive(session, expected):
     last_error = InstallerError('size')
     failures = 0
     while failures < DOWNLOAD_ATTEMPTS:
+        _check_cancelled()
         source = sources[0]
         offset = part.stat().st_size if part.exists() else 0
         if offset > expected:
@@ -677,6 +725,9 @@ def _download_archive(session, expected):
             if len(sources) > 1:
                 sources.append(sources.pop(0))
             if failures < DOWNLOAD_ATTEMPTS:
+                # Retain the legacy sleep for ordinary retries; cancellation is
+                # checked before every subsequent network attempt.
+                _check_cancelled()
                 time.sleep(min(2 ** failures, 4))
     raise InstallerError(_error_code(last_error)) from None
 
@@ -707,6 +758,7 @@ def _install_archive(archive):
 
 def _setup_worker():
     try:
+        _check_cancelled()
         _refresh_tool()
         if not VOCAL_EXE:
             if (BASE_DIR / 'vocal-separate').exists():
@@ -716,10 +768,12 @@ def _setup_worker():
                 expected = _release_size(session)
                 _update_state(persist=True, stage='下载中')
                 archive = _download_archive(session, expected)
+            _check_cancelled()
             _update_state(persist=True, stage='验证并解压中', progress=100)
             _log('extract-start')
             _install_archive(archive)
         ensure_running()
+        _check_cancelled()
         _update_state(persist=True, stage='完成', progress=100, error='', error_code='')
     except Exception as exc:
         _failure(exc)
@@ -731,13 +785,16 @@ def start_setup_async():
     """Return started/busy/ready. Installed-but-failed tools retry startup, not download."""
     global _setup_thread
     with _state_lock:
+        _check_cancelled()
         if setup_state['downloading']:
             return 'busy'
         # Reserve before checking readiness so concurrent callers cannot create workers.
         _update_state(persist=True, downloading=True, action='started')
     try:
         _refresh_tool()
-        if VOCAL_EXE and running():
+        ready = VOCAL_EXE and running()
+        _check_cancelled()
+        if ready:
             _update_state(persist=True, downloading=False, action='ready', stage='完成',
                           error='', error_code='')
             return 'ready'
@@ -745,9 +802,11 @@ def start_setup_async():
                       error='', error_code='')
         _log('setup-requested')
         thread = threading.Thread(target=_setup_worker, daemon=True, name='vocal-setup')
-        with _state_lock:
-            _setup_thread = thread
-        thread.start()
+        with _launch_lock:
+            _check_cancelled()
+            with _state_lock:
+                _setup_thread = thread
+            thread.start()
         return 'started'
     except Exception as exc:
         _failure(exc)
@@ -757,6 +816,8 @@ def start_setup_async():
 
 def auto_start_async():
     """Start only existing installs, through the same single-worker reservation."""
+    if _cancel_event.is_set():
+        return None
     _refresh_tool()
     if VOCAL_EXE:
         try:
@@ -797,7 +858,7 @@ def _prepare_file(src: Path) -> Path:
     cmd = [ffmpeg_api.FFMPEG, '-y', '-i', str(src),
            '-codec:a', 'libmp3lame', '-qscale:a', '2', str(tmp), '-loglevel', 'error']
     try:
-        r = subprocess.run(cmd, capture_output=True, timeout=600)
+        r = owned_processes.run(cmd, capture_output=True, timeout=600)
     except subprocess.TimeoutExpired:
         raise RuntimeError('m4a 转 mp3 超时')
     if r.returncode != 0 or not tmp.is_file() or tmp.stat().st_size < 1024:

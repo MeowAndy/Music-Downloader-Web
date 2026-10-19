@@ -20,8 +20,11 @@ def main():
     parser.add_argument('--ncm-sample', type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    destination = Path(tempfile.mkdtemp(prefix='portable-test-v1.2-中文 空目录-', dir=root))
-    exe = destination / 'MusicDownloaderWeb.exe'
+    import sys
+    sys.path.insert(0, str(root))
+    from startup import BUILD_ID
+    destination = Path(tempfile.mkdtemp(prefix='portable-test-' + BUILD_ID + '-中文 空目录-', dir=root))
+    exe = destination / args.exe.name
     shutil.copy2(args.exe, exe)
     env = os.environ.copy()
     env.update(PATH=str(Path(os.environ['SystemRoot']) / 'System32'),
@@ -53,7 +56,7 @@ def main():
             url = report['url']
             identity = session.get(url + '/api/health', timeout=10).json()
             resources = Path(identity['resource_dir'])
-            check('fresh-startup', report['ok'] and identity['build_id'] == '1.2.0', 'v1.2.0; diagnostics without failures')
+            check('fresh-startup', report['ok'] and identity['build_id'] == BUILD_ID, BUILD_ID + '; diagnostics without failures')
             check('isolated-data-and-instance', Path(identity['data_dir']) == destination and identity['instance'] == report['instance'] and resources != root, 'new writable folder, unique instance, extracted resources')
             check('no-account-distributed', not any((destination / p).exists() for p in ['qq_cookie.txt', 'netease-auth.json']), 'no account files copied or embedded')
             checks = [('/api/cookie', 'qq'), ('/api/netease/login/status', 'netease'), ('/api/migu/login/status', 'migu'), ('/api/hifiti/login/status', 'hifiti')]

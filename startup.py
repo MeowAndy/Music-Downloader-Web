@@ -18,9 +18,10 @@ import threading
 import time
 import uuid
 import webbrowser
+import owned_processes
 from pathlib import Path
 
-BUILD_ID = '1.2.0'
+BUILD_ID = '1.3.0-desktop'
 APP_ID = 'music-downloader-web'
 HOST = '127.0.0.1'
 PORT = 8899
@@ -83,7 +84,7 @@ def check_tool(executable, tool, timeout=10):
         if not executable.is_file():
             return row(name, 'fail', '缺少内置工具 bin/%s.exe。' % tool)
         args = ['--version'] if tool == 'node' else ['-version']
-        result = subprocess.run(
+        result = owned_processes.run(
             [str(executable), *args], capture_output=True, timeout=timeout,
             creationflags=(getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000)
                            if os.name == 'nt' else 0),
@@ -290,7 +291,7 @@ def start_optional_vocal(vocal_module=None):
         return row('vocal', 'warn', '可选 AI 组件自动启动不可用（%s）；未启动安装下载。' % _error_kind(exc))
 
 
-def serve(app):
+def serve(app, presenter=None):
     """Run until Ctrl+C. Return 0 only if all diagnostics have no failures.
 
     Network/optional failures are reported but do not prevent access to the local
@@ -342,6 +343,11 @@ def serve(app):
             return 1
         locally_ready = True
         rows.append(start_optional_vocal())
+        if presenter is not None and os.environ.get('MUSIC_DOWNLOADER_NO_BROWSER') != '1':
+            rows.append(row('desktop', 'ok', '本实例已就绪，正在启动桌面窗口。'))
+            report()
+            presenter(url)
+            return 1 if any(item['status'] == 'fail' for item in rows) else 0
         if os.environ.get('MUSIC_DOWNLOADER_NO_BROWSER') == '1':
             rows.append(row('browser', 'warn', 'MUSIC_DOWNLOADER_NO_BROWSER=1，已禁用自动打开浏览器。'))
         else:

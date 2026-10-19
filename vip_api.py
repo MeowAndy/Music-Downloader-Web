@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 import paths
+import owned_processes
 
 BASE_DIR = paths.APP_DIR
 UM_DECRYPT = paths.RES_DIR / 'vendor' / 'um' / 'um_decrypt.js'
@@ -100,7 +101,7 @@ class VipMonitor:
             raise RuntimeError('未找到 Node.js，无法解密 mflac')
         cmd = [NODE, str(UM_DECRYPT), mflac_path, str(OUTPUT_DIR)]
         try:
-            res = subprocess.run(cmd, capture_output=True, timeout=600)
+            res = owned_processes.run(cmd, capture_output=True, timeout=600)
         except subprocess.TimeoutExpired:
             raise RuntimeError('转换超时（10分钟）')
         out = res.stdout.decode('utf-8', errors='ignore').strip()

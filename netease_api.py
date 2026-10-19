@@ -17,6 +17,7 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 import requests
 
 import paths
+import owned_processes
 import ncm_api
 
 NODE_BRIDGE = paths.RES_DIR / 'vendor' / 'netease_bridge.js'
@@ -175,7 +176,7 @@ def bridge_call(op, args=None, cookie=None):
             env = os.environ.copy()
             env.pop('NETEASE_COOKIE', None)
             env.update(TMP=private, TEMP=private, TMPDIR=private)
-            result = subprocess.run(
+            result = owned_processes.run(
                 [paths.node_exe(), str(NODE_BRIDGE)],
                 input=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
                 capture_output=True, timeout=45, cwd=private, env=env,

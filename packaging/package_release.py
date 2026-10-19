@@ -14,11 +14,17 @@ def main():
     root = Path(__file__).resolve().parents[1]
     destination = args.destination.resolve()
     destination.mkdir(parents=True, exist_ok=False)
-    exe = destination / 'MusicDownloaderWeb.exe'
+    import sys
+    sys.path.insert(0, str(root))
+    from startup import BUILD_ID
+    exe = destination / ('MusicDownloaderWeb-v' + BUILD_ID + '.exe')
     shutil.copy2(args.exe, exe)
     entries = [(exe, exe.name), (root / 'packaging/使用说明.txt', '使用说明.txt')]
     entries.extend((path, 'licenses/' + path.name) for path in sorted((root / 'licenses').iterdir()) if path.is_file())
-    archive = destination / 'MusicDownloaderWeb-v1.2.0-Windows-x64.zip'
+    import sys
+    sys.path.insert(0, str(root))
+    from startup import BUILD_ID
+    archive = destination / ('MusicDownloaderWeb-v' + BUILD_ID + '-Windows-x64.zip')
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as output:
         for path, name in entries:
             output.write(path, name)

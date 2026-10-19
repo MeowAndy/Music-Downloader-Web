@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import paths
+import owned_processes
 
 TOOL_NAME = 'ncm转mp3.exe'
 TOOL_SHA256 = 'a1f6f6ce87500b7b1f2a89dbf85b13e81d327eea4641daf8afe0ab840f2c518c'
@@ -39,7 +40,7 @@ def _tool():
 
 def _run(command, cwd, timeout):
     try:
-        result = subprocess.run(command, cwd=cwd, stdin=subprocess.DEVNULL,
+        result = owned_processes.run(command, cwd=cwd, stdin=subprocess.DEVNULL,
                                 capture_output=True, timeout=timeout, shell=False,
                                 creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     except subprocess.TimeoutExpired:

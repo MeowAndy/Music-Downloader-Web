@@ -9,6 +9,7 @@ from pathlib import Path
 import requests
 
 import paths
+import owned_processes
 
 UA = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
@@ -247,7 +248,7 @@ def get_playlist(disstid, song_num=500):
     cmd = [paths.node_exe(), str(NODE_BRIDGE), 'playlist', str(disstid), str(song_num)]
     # Windows 下 node 输出编码
     try:
-        res = subprocess.run(cmd, capture_output=True, timeout=30)
+        res = owned_processes.run(cmd, capture_output=True, timeout=30)
     except subprocess.TimeoutExpired:
         raise RuntimeError('歌单请求超时')
     if res.returncode != 0:

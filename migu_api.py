@@ -21,6 +21,7 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 import requests
 
 import paths
+import owned_processes
 
 SEARCH_URL = 'https://app.u.nf.migu.cn/pc/resource/song/item/search/v1.0'
 RESOURCE_URL = 'https://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do'
@@ -406,7 +407,7 @@ def _validate_media(part, extension, duration, deadline, ffmpeg):
     # Progress is local and bounded by runtime, never return raw tool output.
     with tempfile.TemporaryFile() as progress:
         try:
-            result = subprocess.run(
+            result = owned_processes.run(
                 [ffmpeg, '-nostdin', '-hide_banner', '-loglevel', 'error',
                  '-xerror', '-err_detect', 'explode', '-protocol_whitelist', 'file,pipe',
                  '-f', extension, '-i', str(part), '-map', '0:a:0', '-vn', '-sn', '-dn',

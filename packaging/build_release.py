@@ -25,7 +25,7 @@ def main():
     subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean',
                     '--distpath', str(destination / 'dist'), '--workpath', str(destination / 'build'),
                     str(ROOT / 'MusicDownloaderWeb.spec')], cwd=ROOT, check=True)
-    exe = destination / 'dist' / 'MusicDownloaderWeb.exe'
+    exe = destination / 'dist' / ('MusicDownloaderWeb-v' + startup.BUILD_ID + '.exe')
     from PyInstaller.archive.readers import CArchiveReader
     archive = CArchiveReader(str(exe))
     names = [name.replace('\\', '/') for name in archive.toc]
@@ -37,7 +37,16 @@ def main():
             raise SystemExit('Private/runtime resource in EXE')
     for relative in startup.REQUIRED_RESOURCES:
         assert relative in names, relative
-    summary = {'version': startup.BUILD_ID, 'exe_bytes': exe.stat().st_size,
+    import pefile
+    pe = pefile.PE(str(exe), fast_load=True)
+    assert pe.OPTIONAL_HEADER.Subsystem == 2, 'Desktop EXE must not open a console'
+    pe.close()
+    for resource in ('app.ico', 'webview/lib/Microsoft.Web.WebView2.Core.dll',
+                     'webview/lib/Microsoft.Web.WebView2.WinForms.dll'):
+        assert resource in names, resource
+    assert any(name.endswith('Python.Runtime.dll') for name in names)
+    assert any(name.endswith('WebView2Loader.dll') for name in names)
+    summary = {'version': startup.BUILD_ID, 'windowed': True, 'exe_bytes': exe.stat().st_size,
                'sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
                'embedded_entries': len(names), 'private_runtime_entries': 0}
     (destination / 'build-summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')

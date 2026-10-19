@@ -48,7 +48,7 @@ class StartupTests(unittest.TestCase):
                 mock.patch.object(startup.webbrowser, 'open', side_effect=AssertionError('browser side effect')), \
                 mock.patch.object(tempfile, 'NamedTemporaryFile', side_effect=AssertionError('file side effect')):
             importlib.reload(startup)
-        self.assertEqual(startup.BUILD_ID, '1.2.0')
+        self.assertEqual(startup.BUILD_ID, '1.3.0-desktop')
 
     def test_import_checks_all_dependencies_and_redacts_errors(self):
         def load(name):
@@ -397,7 +397,8 @@ class StartupTests(unittest.TestCase):
         vocal.auto_start_async.assert_called_once_with()
         vocal.start_setup_async.assert_not_called()
 
-    def mocked_serve(self, smoke, *, no_browser=True, join_error=KeyboardInterrupt(), diag=None):
+    def mocked_serve(self, smoke, *, no_browser=True, join_error=KeyboardInterrupt(), diag=None,
+                     presenter=None):
         app = types.SimpleNamespace(config={})
         server = mock.Mock(server_port=32100)
         thread = mock.Mock()
@@ -415,6 +416,9 @@ class StartupTests(unittest.TestCase):
         def browser(url):
             events.append('browser')
             return True
+        def present(url):
+            events.append('presenter')
+            return presenter(url)
         with mock.patch.object(startup.importlib, 'import_module', return_value=self.paths), \
                 mock.patch.object(startup, 'diagnostics', return_value=diag or []), \
                 mock.patch.object(startup, 'bind_server', return_value=server), \
@@ -424,7 +428,7 @@ class StartupTests(unittest.TestCase):
                 mock.patch.object(startup.webbrowser, 'open', side_effect=browser) as opener, \
                 mock.patch.object(startup, 'safe_print'), \
                 mock.patch.dict(os.environ, {'MUSIC_DOWNLOADER_NO_BROWSER': '1' if no_browser else '0'}):
-            code = startup.serve(app)
+            code = startup.serve(app, presenter=present if presenter is not None else None)
         return code, server, thread, opener, vocal, events
 
     def test_serve_ctrlc_shutdown_and_no_browser_environment(self):
@@ -444,6 +448,89 @@ class StartupTests(unittest.TestCase):
         self.assertEqual(code, 0)
         browser.assert_called_once_with('http://127.0.0.1:32100')
         self.assertEqual(events, ['ready', 'browser'])
+
+    def test_presenter_runs_only_after_readiness_and_return_closes_server(self):
+        presenter = mock.Mock()
+        code, server, thread, browser, vocal, events = self.mocked_serve(
+            [startup.row('http:health', 'ok', 'own')], no_browser=False,
+            presenter=presenter)
+        self.assertEqual(code, 0)
+        self.assertEqual(events, ['ready', 'presenter'])
+        presenter.assert_called_once_with('http://127.0.0.1:32100')
+        browser.assert_not_called()
+        vocal.assert_called_once_with()
+        server.shutdown.assert_called_once_with()
+        thread.join.assert_called_once_with(timeout=5)
+        server.server_close.assert_called_once_with()
+        report = json.loads((self.data / 'startup-report.json').read_text(encoding='utf-8'))
+        self.assertTrue(report['ok'])
+        self.assertEqual(next(r['status'] for r in report['rows'] if r['name'] == 'desktop'), 'ok')
+
+    def test_presenter_never_runs_when_any_readiness_check_fails(self):
+        for endpoint in ('http:health', 'http:/', 'http:/api/files', 'http:/api/lyrics'):
+            with self.subTest(endpoint=endpoint):
+                presenter = mock.Mock()
+                code, server, _, browser, vocal, events = self.mocked_serve(
+                    [startup.row('http:health', 'ok', 'own'),
+                     startup.row(endpoint, 'fail', 'not ready')],
+                    no_browser=False, presenter=presenter)
+                self.assertEqual(code, 1)
+                self.assertEqual(events, ['ready'])
+                presenter.assert_not_called()
+                browser.assert_not_called()
+                vocal.assert_not_called()
+                server.shutdown.assert_called_once_with()
+                server.server_close.assert_called_once_with()
+
+    def test_presenter_failure_saves_sanitized_report_and_always_closes_server(self):
+        for error in (RuntimeError('Cookie=SECRET https://private.invalid/?token=SECRET'),
+                      SystemExit('SECRET')):
+            with self.subTest(error=type(error).__name__):
+                presenter = mock.Mock(side_effect=error)
+                code, server, thread, browser, _, events = self.mocked_serve(
+                    [startup.row('http:health', 'ok', 'own')], no_browser=False,
+                    presenter=presenter)
+                self.assertEqual(code, 1)
+                self.assertEqual(events, ['ready', 'presenter'])
+                browser.assert_not_called()
+                server.shutdown.assert_called_once_with()
+                thread.join.assert_called_once_with(timeout=5)
+                server.server_close.assert_called_once_with()
+                text = (self.data / 'startup-report.json').read_text(encoding='utf-8')
+                self.assertNotIn('SECRET', text)
+                self.assertNotIn('private.invalid', text)
+                report = json.loads(text)
+                self.assertFalse(report['ok'])
+                failure = report['rows'][-1]
+                self.assertEqual((failure['name'], failure['status']), ('startup', 'fail'))
+                self.assertIn(type(error).__name__, failure['detail'])
+
+    def test_no_browser_environment_overrides_presenter(self):
+        presenter = mock.Mock()
+        code, server, _, browser, _, events = self.mocked_serve(
+            [startup.row('http:health', 'ok', 'own')], presenter=presenter)
+        self.assertEqual(code, 0)
+        self.assertEqual(events, ['ready'])
+        presenter.assert_not_called()
+        browser.assert_not_called()
+        server.shutdown.assert_called_once_with()
+        server.server_close.assert_called_once_with()
+        report = json.loads((self.data / 'startup-report.json').read_text(encoding='utf-8'))
+        self.assertFalse(any(r['name'] == 'desktop' for r in report['rows']))
+        self.assertEqual(next(r['status'] for r in report['rows'] if r['name'] == 'browser'), 'warn')
+
+    def test_presenter_return_preserves_existing_diagnostic_failures(self):
+        presenter = mock.Mock()
+        code, server, _, browser, _, events = self.mocked_serve(
+            [startup.row('http:health', 'ok', 'own')], no_browser=False,
+            presenter=presenter, diag=[startup.row('tool:node', 'fail', 'Missing.')])
+        self.assertEqual(code, 1)
+        self.assertEqual(events, ['ready', 'presenter'])
+        browser.assert_not_called()
+        server.shutdown.assert_called_once_with()
+        server.server_close.assert_called_once_with()
+        report = json.loads((self.data / 'startup-report.json').read_text(encoding='utf-8'))
+        self.assertFalse(report['ok'])
 
     def test_failed_smoke_stops_server_without_browser_or_optional_vocal(self):
         code, server, _, browser, vocal, _ = self.mocked_serve([startup.row('http:health', 'fail', 'stale')], no_browser=False)
