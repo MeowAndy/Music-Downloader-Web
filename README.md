@@ -1,12 +1,20 @@
 # Music Downloader Web
 
-**当前发布：v1.2.0（Windows x64）** · [Release 下载](https://github.com/MeowAndy/Music-Downloader-Web/releases/tag/v1.2.0) · [安卓 APK 方案与可行性](docs/android-apk-plan.md)
+**当前发布：v1.3.1-desktop（Windows x64 桌面版）** · [Release 下载](https://github.com/MeowAndy/Music-Downloader-Web/releases/tag/v1.3.1-desktop) · [安卓 APK 方案与可行性](docs/android-apk-plan.md)
 
 本次将网易云、咪咕、HiFiTi 原生渠道、歌词、条件 NCM 处理、AI 下载改进及四栏布局合并发布。下载干净 EXE／ZIP 后使用自己的账号；不携带开发者凭据。下文涉及早期“未打包／未推送”的文字为相应功能开发时的历史验证边界，不代表此次 Release 状态。安卓仍只有方案，没有已发布 APK。
 
 🎵 一站式音乐工具：**QQ音乐搜索/下载（标准·HQ·SQ无损·臻品母带四档音质）+ 网易云搜索/按权益下载 + QQ／网易云歌词 + 咪咕搜索／按下载事务授权保存音频／原文歌词+ 全民K歌下载 + mflac解密 + 本地AI人声分离**，纯本地运行的 Web 应用。
 
 基于 [Music-Downloader](https://github.com/Li4n0/Music-Downloader) 与 [KG-Downloader](https://github.com/T-K-233/KG-Downloader) 重制，接口全部更新为当前可用版本。
+
+### 桌面版
+
+![桌面版](docs/screenshot-desktop.png)
+
+*桌面版*
+
+### 网页版界面
 
 ![界面预览](docs/screenshot-dark.png)
 ![日间主题](docs/screenshot-light.png)
