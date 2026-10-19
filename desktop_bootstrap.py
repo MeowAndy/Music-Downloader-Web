@@ -19,7 +19,7 @@ def mode(argv=None, environ=None):
 def report_failure(kind):
     text = ('音乐下载器启动失败（%s）。\n未记录账号或异常正文。\n'
             '桌面模式需要 Microsoft Edge WebView2 和 .NET Framework 4.6.2 或更新版本。\n'
-            '可重新运行 MusicDownloaderWeb-v1.3.0-desktop.exe --browser 使用浏览器兼容模式。\n'
+            '可重新运行 MusicDownloaderWeb-v1.3.1-desktop.exe --browser 使用浏览器兼容模式。\n'
             'WebView2 官方安装页：https://developer.microsoft.com/microsoft-edge/webview2/' % kind)
     target = Path(tempfile.gettempdir()) / 'MusicDownloaderWeb-startup-error.txt'
     try:

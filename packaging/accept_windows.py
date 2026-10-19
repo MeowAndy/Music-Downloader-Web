@@ -63,9 +63,9 @@ def main():
             for route, name in checks:
                 data = session.get(url + route, timeout=15).json()
                 check('anonymous-' + name, data.get('ok') is True and data.get('set') is False, 'anonymous status only')
-            page = session.get(url + '/', timeout=10).text
-            source_page = (root / 'static/index.html').read_text(encoding='utf-8')
-            check('exact-current-frontend', page == source_page and 'HiFiTi渠道' in page, 'current four-panel UI and native account modal bundled')
+            page = session.get(url + '/', timeout=10).content
+            source_page = (root / 'static/index.html').read_bytes()
+            check('exact-current-frontend', page == source_page and 'HiFiTi渠道'.encode('utf-8') in page, 'byte-exact current four-panel UI and native account modal bundled')
             r = session.get(url + '/api/search', params={'kw': '周深'}, timeout=10)
             check('qq-login-required', r.status_code == 401 and r.json().get('code') == 'LOGIN_REQUIRED', 'fresh accounts must scan before QQ search')
             for route in ['/api/migu/status', '/api/format_status', '/api/vocal/status']:

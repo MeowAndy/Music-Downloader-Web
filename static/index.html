@@ -34,16 +34,41 @@
     --shadow: rgba(30,50,80,.15);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { min-height: 100%; scrollbar-gutter: stable; }
+  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid transparent; background-clip: padding-box; border-radius: 12px; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--text2); }
   body {
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
     min-height: 100vh;
+    min-height: 100dvh;
     transition: background .3s, color .3s;
   }
-  .container { max-width: 1800px; margin: 0 auto; padding: 20px 16px 60px; }
+  .container { max-width: 1800px; margin: 0 auto; padding: 12px 18px 18px; }
+  .app-splash { position: fixed; inset: 0; z-index: 150; display: grid; place-content: center; justify-items: center; gap: 18px; background: var(--bg); text-align: center; transition: opacity .32s ease, visibility .32s; animation: splash-release .01s 6s forwards; }
+  .app-splash.leaving { opacity: 0; visibility: hidden; pointer-events: none; }
+  .splash-mark { position: relative; display: grid; place-items: center; width: 164px; height: 164px; }
+  .splash-mark::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(49,194,124,.24), transparent 68%); animation: splash-glow 1.6s ease-in-out infinite; }
+  .splash-mark::after { content: ''; position: absolute; inset: 4px; border: 1px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 2.4s linear infinite; }
+  .splash-mark img { position: relative; width: 112px; height: 112px; object-fit: contain; filter: drop-shadow(0 12px 22px var(--shadow)); animation: splash-arrive .65s cubic-bezier(.2,.8,.2,1) both; }
+  .app-splash h2 { font-size: 22px; letter-spacing: 2px; }
+  .app-splash p { color: var(--text2); font-size: 12px; line-height: 1.8; }
+  .splash-progress { width: 100px; height: 3px; border-radius: 8px; background: var(--bg3); overflow: hidden; }
+  .splash-progress::after { content: ''; display: block; width: 45%; height: 100%; background: var(--accent); border-radius: inherit; animation: splash-progress 1.1s ease-in-out infinite; }
+  @keyframes splash-arrive { from { opacity: 0; transform: translateY(10px) scale(.88); } to { opacity: 1; transform: none; } }
+  @keyframes splash-glow { 50% { transform: scale(1.12); opacity: .5; } }
+  @keyframes splash-progress { from { transform: translateX(-105%); } to { transform: translateX(325%); } }
+  @keyframes splash-release { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .app-splash, .splash-mark::before, .splash-mark::after, .splash-mark img, .splash-progress::after { animation: none; transition-duration: .01s; }
+    .app-splash { animation: splash-release .01s 6s forwards; }
+  }
 
-  header { text-align: center; padding: 20px 0 6px; }
+  header { text-align: center; padding: 10px 0 4px; }
   header h1 {
     font-size: 25px; font-weight: 700; letter-spacing: 1px;
     background: linear-gradient(90deg, var(--accent), #5eead4);
@@ -88,7 +113,9 @@
   .panel {
     background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
     overflow: hidden; display: flex; flex-direction: column; min-width: 0;
-    max-height: calc(100vh - 210px); min-height: 320px;
+    max-height: var(--workspace-height, calc(100vh - 280px));
+    max-height: var(--workspace-height, calc(100dvh - 280px));
+    min-height: min(320px, var(--workspace-height, 320px));
   }
   #vocalFile, #vocalModel { min-width: 0; }
   #vipFolder { overflow-wrap: anywhere; }
@@ -99,10 +126,20 @@
     background: var(--bg2); position: sticky; top: 0; z-index: 5;
   }
   .panel-head h2 { font-size: 15px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .panel-body { padding: 10px; overflow-y: auto; flex: 1; }
-  .panel-body::-webkit-scrollbar { width: 8px; }
-  .panel-body::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
-  .panel-body::-webkit-scrollbar-thumb:hover { background: var(--border); }
+  .panel-body { padding: 10px; overflow-y: auto; flex: 1; min-height: 0; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
+  @media (max-width: 1199px), (max-height: 760px) {
+    .panel { max-height: none; min-height: 260px; }
+    .panel-body { overflow-y: visible; flex: none; overscroll-behavior-y: auto; }
+    .container { padding: 10px 12px 18px; }
+  }
+  .layout.page-flow .panel { max-height: none; min-height: 260px; }
+  .layout.page-flow .panel-body { overflow-y: visible; flex: none; overscroll-behavior-y: auto; }
+  @media (max-width: 700px) {
+    header h1 { font-size: 21px; }
+    .search-box { gap: 6px; }
+    .search-box input { min-width: 0; padding: 11px; }
+    .search-box button { padding: 11px 16px; }
+  }
 
   /* ---------- 通用组件 ---------- */
   .btn {
@@ -279,11 +316,18 @@
   .qr-login .qr-copy { flex: 1; min-width: 0; color: var(--text2); font-size: 13px; line-height: 1.8; }
   @media (max-width: 560px) { .qr-login { flex-direction: column; align-items: center; } .qr-login .qr-copy { text-align: center; } }
 
-  footer { text-align: center; color: var(--text2); font-size: 12px; padding: 26px 0 0; line-height: 1.8; }
+  footer { text-align: center; color: var(--text2); font-size: 11px; padding: 12px 0 0; line-height: 1.8; }
   footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
+<div class="app-splash" id="appSplash" role="status" aria-label="正在打开音乐下载器">
+  <div class="splash-mark"><img src="/app.ico" alt="音乐下载器图标" width="112" height="112" fetchpriority="high"></div>
+  <h2>音乐下载器</h2>
+  <div class="splash-progress" aria-hidden="true"></div>
+  <p>正在准备工作区<br>音乐 · 歌词 · 本地工具</p>
+</div>
+<noscript><style>#appSplash { display: none; }</style></noscript>
 <div class="container">
   <header>
     <h1>♪ Music Downloader Web</h1>
@@ -2164,20 +2208,58 @@ $('#openFolderBtn').onclick = openFolder;
 $('#clearFilesBtn').onclick = clearFiles;
 
 async function initializeLogin() {
-  const platformGeneration = _platformGeneration;
-  const searchGeneration = _searchGeneration;
-  const j = await qqLogin.refreshStatus();
-  // Never interrupt a user who selected NetEase or started searching during init.
-  if (j && !j.set && _source === 'qq' && platformGeneration === _platformGeneration && searchGeneration === _searchGeneration) {
-    openQqLogin();
-  }
+  await qqLogin.refreshStatus();
 }
 
-refreshFiles();
-initializeLogin();
-neteaseLogin.refreshStatus();
-refreshVip();
-refreshVocal();
+function updateWorkspaceHeight() {
+  const layout = document.querySelector('.layout');
+  if (!layout) return;
+  const viewport = window.visualViewport?.height || window.innerHeight;
+  const top = layout.getBoundingClientRect().top + window.scrollY;
+  const footer = document.querySelector('footer');
+  const available = Math.floor(viewport - top - (footer?.offsetHeight || 36) - 24);
+  layout.classList.toggle('page-flow', available < 320);
+  document.documentElement.style.setProperty('--workspace-height', Math.max(0, available) + 'px');
+}
+
+function startWorkspaceUI(initialRequests) {
+  const splash = document.getElementById('appSplash');
+  let frame = 0, finished = false;
+  const schedule = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => { frame = 0; updateWorkspaceHeight(); });
+  };
+  window.addEventListener('resize', schedule);
+  window.visualViewport?.addEventListener('resize', schedule);
+  const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
+  for (const selector of ['header', '.source-picker', '.search-box', '.hint', '#loginPanel', '#neteaseLoginPanel', '#miguLoginPanel', '#otherPanel', 'footer']) {
+    const element = document.querySelector(selector);
+    if (element) observer?.observe(element);
+  }
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    splash?.classList.add('leaving');
+    setTimeout(() => { splash?.remove(); schedule(); }, 340);
+    schedule();
+  };
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const minimum = new Promise(resolve => setTimeout(resolve, reduced ? 0 : 1050));
+  const pageReady = document.readyState === 'complete' ? Promise.resolve() : new Promise(resolve => window.addEventListener('load', resolve, { once: true }));
+  const requestsReady = Promise.race([Promise.allSettled(initialRequests), new Promise(resolve => setTimeout(resolve, 2400))]);
+  Promise.all([minimum, pageReady, requestsReady]).then(finish, finish);
+  setTimeout(finish, 4200);
+  window.addEventListener('pagehide', () => { observer?.disconnect(); if (frame) cancelAnimationFrame(frame); finish(); }, { once: true });
+  schedule();
+}
+
+startWorkspaceUI([
+  refreshFiles(),
+  initializeLogin(),
+  neteaseLogin.refreshStatus(),
+  refreshVip(),
+  refreshVocal()
+]);
 </script>
 </body>
 </html>

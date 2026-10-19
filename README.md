@@ -30,9 +30,9 @@
 
 ## 🚀 快速开始（普通用户）
 
-1. 获取带版本号的 `MusicDownloaderWeb-v1.3.0-desktop.exe`（Windows x64 单文件，内置 Python 运行时、Node.js、ffmpeg、WebView2 依赖和基础 Python 依赖，无需另装）。历史 v1.2.0 文件名不同，请勿混用。
+1. 从 [最新桌面版 Release](https://github.com/MeowAndy/Music-Downloader-Web/releases/tag/v1.3.1-desktop) 获取带版本号的 `MusicDownloaderWeb-v1.3.1-desktop.exe`（Windows x64 单文件，内置 Python 运行时、Node.js、ffmpeg、WebView2 依赖和基础 Python 依赖，无需另装）。历史 v1.2.0 文件名不同，请勿混用。
 2. 放入独立文件夹后双击运行，等待启动自检，服务就绪后会打开独立桌面窗口；不再默认打开浏览器。
-3. 首次使用自动显示二维码，使用**自己的 QQ音乐 App** 扫码并确认，再搜索歌曲。登录凭据不能随 EXE 分发。
+3. 页面打开时会显示应用图标启动动画；点击 QQ音乐登录按钮，再使用**自己的 QQ音乐 App** 扫码并确认后搜索歌曲。登录凭据不能随 EXE 分发。
 
 > 首次启动需解包内置依赖，约 10~20 秒属正常现象。默认使用 `127.0.0.1:8899`；端口被占用时会另选端口并打印实际地址，避免打开旧版或其他服务。
 

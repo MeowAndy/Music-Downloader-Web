@@ -48,7 +48,7 @@ class StartupTests(unittest.TestCase):
                 mock.patch.object(startup.webbrowser, 'open', side_effect=AssertionError('browser side effect')), \
                 mock.patch.object(tempfile, 'NamedTemporaryFile', side_effect=AssertionError('file side effect')):
             importlib.reload(startup)
-        self.assertEqual(startup.BUILD_ID, '1.3.0-desktop')
+        self.assertEqual(startup.BUILD_ID, '1.3.1-desktop')
 
     def test_import_checks_all_dependencies_and_redacts_errors(self):
         def load(name):

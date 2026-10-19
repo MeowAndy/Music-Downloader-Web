@@ -53,7 +53,16 @@ def main():
                 value = window.evaluate_js("({title:document.title,panels:document.querySelectorAll('.layout > .panel').length,bridge:!!window.chrome?.webview, file:!!document.querySelector('input[type=file]'),copy:!!navigator.clipboard})")
                 checks.append({'page': value})
                 assert value['panels'] == 4 and value['file'] and value['copy']
-                window.evaluate_js("fetch('/api/health').then(r=>r.json()).then(j=>document.body.dataset.testBuild=j.build_id)")
+                icon = window.evaluate_js("({exists:!!document.querySelector('#appSplash img'),loaded:!!document.querySelector('#appSplash img')?.naturalWidth,src:document.querySelector('#appSplash img')?.getAttribute('src')})")
+                checks.append({'opening_icon': icon})
+                for _ in range(70):
+                    if window.evaluate_js("!document.getElementById('appSplash')"):
+                        break
+                    time.sleep(.1)
+                else:
+                    raise AssertionError('splash did not dismiss')
+                checks.append({'splash_removed': True})
+                window.evaluate_js("fetch('/app.ico').then(r=>{document.body.dataset.iconStatus=String(r.status)});fetch('/api/health').then(r=>r.json()).then(j=>document.body.dataset.testBuild=j.build_id)")
                 for _ in range(50):
                     if window.evaluate_js('document.body.dataset.testBuild') == startup.BUILD_ID:
                         break
@@ -61,6 +70,20 @@ def main():
                 else:
                     raise AssertionError('same-origin fetch')
                 checks.append({'same_origin_fetch': True})
+                assert window.evaluate_js('document.body.dataset.iconStatus') == '200'
+                geometry_script = """(() => ({width:innerWidth,height:innerHeight,documentWidth:document.documentElement.scrollWidth,documentHeight:document.documentElement.scrollHeight,panels:[...document.querySelectorAll('.layout > .panel')].map(p=>{let r=p.getBoundingClientRect();return {top:r.top,bottom:r.bottom,width:r.width}})}))()"""
+                geometry = window.evaluate_js(geometry_script)
+                assert geometry['documentWidth'] <= geometry['width'] + 1
+                if geometry['width'] >= 1200 and geometry['height'] > 760:
+                    assert all(p['bottom'] <= geometry['height'] for p in geometry['panels'])
+                    assert geometry['documentHeight'] <= geometry['height'] + 2
+                checks.append({'initial_workspace_geometry': geometry})
+                for size in ((1000, 800), (780, 580), (1500, 920)):
+                    window.resize(*size)
+                    time.sleep(.4)
+                    measured = window.evaluate_js(geometry_script)
+                    assert measured['documentWidth'] <= measured['width'] + 1
+                    checks.append({'resized_geometry': measured})
                 window.evaluate_js("let a=document.createElement('a');a.href='https://www.hifiti.com/';a.target='_blank';document.body.append(a);a.click()")
                 for _ in range(30):
                     if urls:

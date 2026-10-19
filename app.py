@@ -62,6 +62,11 @@ def index():
     return resp
 
 
+@app.get('/app.ico')
+def app_icon():
+    return send_from_directory(str(RES_DIR), 'app.ico', mimetype='image/x-icon')
+
+
 # ---------- 网易云音乐 ----------
 
 @app.before_request

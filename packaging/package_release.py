@@ -21,9 +21,6 @@ def main():
     shutil.copy2(args.exe, exe)
     entries = [(exe, exe.name), (root / 'packaging/使用说明.txt', '使用说明.txt')]
     entries.extend((path, 'licenses/' + path.name) for path in sorted((root / 'licenses').iterdir()) if path.is_file())
-    import sys
-    sys.path.insert(0, str(root))
-    from startup import BUILD_ID
     archive = destination / ('MusicDownloaderWeb-v' + BUILD_ID + '-Windows-x64.zip')
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as output:
         for path, name in entries:

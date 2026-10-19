@@ -84,7 +84,7 @@ def main():
                 assert not url.endswith(':8899'), 'Port fallback not used'
                 identity = session.get(url + '/api/health', timeout=10).json()
                 assert identity['instance'] == report['instance'] and Path(identity['data_dir']) == destination
-                assert identity['build_id'] == '1.3.0-desktop'
+                assert identity['build_id'] == '1.3.1-desktop'
                 for route in ('/api/cookie', '/api/netease/login/status', '/api/migu/login/status', '/api/hifiti/login/status'):
                     assert session.get(url + route, timeout=10).json().get('set') is False
                 time.sleep(2)

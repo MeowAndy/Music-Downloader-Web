@@ -21,7 +21,7 @@ import webbrowser
 import owned_processes
 from pathlib import Path
 
-BUILD_ID = '1.3.0-desktop'
+BUILD_ID = '1.3.1-desktop'
 APP_ID = 'music-downloader-web'
 HOST = '127.0.0.1'
 PORT = 8899

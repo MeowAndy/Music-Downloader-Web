@@ -11,7 +11,7 @@ assert.ok(embedded, 'index.html must contain its frontend script');
 new vm.Script(embedded[1], { filename: frontendPath });
 // Suppress only automatic startup requests, retaining real function definitions
 // and event bindings. Fail explicitly if the startup block changes.
-const startup = /refreshFiles\(\);\s*initializeLogin\(\);\s*neteaseLogin.refreshStatus\(\);\s*refreshVip\(\);\s*refreshVocal\(\);\s*$/;
+const startup = /startWorkspaceUI\(\[\s*refreshFiles\(\),\s*initializeLogin\(\),\s*neteaseLogin\.refreshStatus\(\),\s*refreshVip\(\),\s*refreshVocal\(\)\s*\]\);\s*$/;
 assert.ok(startup.test(embedded[1]), 'Update the VM startup suppression for the new frontend entry point');
 const script = embedded[1].replace(startup, '');
 let assertions = 0;
@@ -176,7 +176,249 @@ function setup(storage = {}) {
     evaluate: code => vm.runInContext(code, context)
   };
 }
+// Run the real workspace definitions in isolation: the older lyric/account DOM
+// intentionally does not pretend to implement layout, observers or a browser clock.
+const workspaceStart = embedded[1].indexOf('function updateWorkspaceHeight()');
+assert.notEqual(workspaceStart, -1, 'workspace sizing definition must exist');
+const workspaceScript = embedded[1].slice(workspaceStart, embedded[1].search(startup));
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+const flushPromises = () => new Promise(setImmediate);
+function setupWorkspace({ readyState = 'complete', reduced = false, visualViewport = true, resizeObserver = true, splashPresent = true } = {}) {
+  const elements = new Map(), properties = new Map(), writes = [], frames = new Map(), timers = new Map(), observers = [], cancelledFrames = [], mediaQueries = [];
+  const geometry = { top: 200, footer: 40, reads: 0 };
+  let now = 0, timerId = 0, frameId = 0;
+  function eventTarget() {
+    const listeners = new Map();
+    return {
+      listeners,
+      addEventListener(type, fn, options = {}) {
+        if (!listeners.has(type)) listeners.set(type, []);
+        listeners.get(type).push({ fn, once: options.once === true });
+      },
+      dispatch(type) {
+        for (const listener of [...(listeners.get(type) || [])]) {
+          if (listener.once) listeners.set(type, listeners.get(type).filter(item => item !== listener));
+          listener.fn({ type });
+        }
+      }
+    };
+  }
+  function addElement(selector) {
+    const classes = new Set();
+    const node = {
+      classes, additions: [], removeCount: 0, isConnected: true,
+      classList: {
+        add(name) { classes.add(name); node.additions.push(name); },
+        toggle(name, on) { if (on) classes.add(name); else classes.delete(name); }
+      },
+      remove() { this.removeCount++; this.isConnected = false; }
+    };
+    elements.set(selector, node);
+    return node;
+  }
+  const window = Object.assign(eventTarget(), { innerHeight: 1000, scrollY: 0, matchMedia: query => { mediaQueries.push(query); return { matches: reduced }; } });
+  if (visualViewport) window.visualViewport = Object.assign(eventTarget(), { height: 900 });
+  const layout = addElement('.layout');
+  layout.getBoundingClientRect = () => { geometry.reads++; return { top: geometry.top - window.scrollY }; };
+  for (const selector of ['header', '.source-picker', '.search-box', '.hint', '#loginPanel', '#neteaseLoginPanel', '#miguLoginPanel', '#otherPanel', 'footer']) addElement(selector);
+  Object.defineProperty(elements.get('footer'), 'offsetHeight', { get: () => geometry.footer });
+  const splash = splashPresent ? addElement('#appSplash') : null;
+  const document = {
+    readyState,
+    querySelector: selector => elements.get(selector) || null,
+    getElementById: id => elements.get('#' + id) || null,
+    documentElement: { style: { setProperty(name, value) { properties.set(name, value); writes.push([name, value]); } } }
+  };
+  const context = vm.createContext({
+    document, window,
+    setTimeout(fn, delay = 0) { timers.set(++timerId, { fn, due: now + delay, delay }); return timerId; },
+    requestAnimationFrame(fn) { frames.set(++frameId, fn); return frameId; },
+    cancelAnimationFrame(id) { cancelledFrames.push(id); frames.delete(id); },
+    ...(resizeObserver ? { ResizeObserver: class {
+      constructor(callback) { this.callback = callback; this.observed = []; this.disconnected = false; observers.push(this); }
+      observe(node) { this.observed.push(node); }
+      disconnect() { this.disconnected = true; }
+    } } : {})
+  });
+  vm.runInContext(workspaceScript, context, { filename: frontendPath + ':workspace' });
+  return {
+    context, document, window, elements, layout, splash, properties, writes, geometry, frames, timers, observers, cancelledFrames, mediaQueries,
+    evaluate: code => vm.runInContext(code, context),
+    start(requests = []) { context.initialRequests = requests; vm.runInContext('startWorkspaceUI(initialRequests)', context); },
+    runFrame() {
+      const pending = [...frames];
+      for (const [id, fn] of pending) { frames.delete(id); fn(now); }
+    },
+    async advance(milliseconds) {
+      const target = now + milliseconds;
+      await flushPromises();
+      for (;;) {
+        const next = [...timers].filter(([, timer]) => timer.due <= target).sort((a, b) => a[1].due - b[1].due || a[0] - b[0])[0];
+        if (!next) break;
+        now = next[1].due; timers.delete(next[0]); next[1].fn();
+        await flushPromises();
+      }
+      now = target;
+      await flushPromises();
+    }
+  };
+}
 async function main() {
+  {
+    const css = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+    const rule = selector => css.match(new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]+)\\}'))?.[1] || '';
+    check(/scrollbar-gutter:\s*stable/.test(rule('html')), 'root reserves a stable page scrollbar gutter');
+    check(/scrollbar-width:\s*thin;\s*scrollbar-color:\s*var\(--border\) transparent/.test(css), 'Firefox gets thin theme-aware scrollbars');
+    check(/width:\s*7px;\s*height:\s*7px/.test(rule('::-webkit-scrollbar')), 'WebKit scrollbars are thin in both directions');
+    check(/background:\s*transparent/.test(rule('::-webkit-scrollbar-track')), 'scrollbar track stays unobtrusive');
+    check(/background:\s*var\(--border\)/.test(rule('::-webkit-scrollbar-thumb')), 'scrollbar thumb follows both color themes');
+    check(/background-color:\s*var\(--text2\)/.test(rule('::-webkit-scrollbar-thumb:hover')), 'hovered scrollbar remains visible');
+    for (const declaration of [/overflow-y:\s*auto/, /min-height:\s*0/, /scrollbar-gutter:\s*stable/, /overscroll-behavior-y:\s*contain/]) check(declaration.test(rule('.panel-body')), 'desktop panel scrolling: ' + declaration);
+    for (const selector of ['.layout.page-flow .panel', '.layout.page-flow .panel-body']) check(rule(selector), 'page-flow override exists for ' + selector);
+    check(/max-height:\s*none/.test(rule('.layout.page-flow .panel')), 'short workspace removes panel height cap');
+    check(/overflow-y:\s*visible/.test(rule('.layout.page-flow .panel-body')), 'short workspace uses page scrolling');
+    check(/@media\s*\(max-width:\s*1199px\),\s*\(max-height:\s*760px\)\s*\{[\s\S]*?\.panel-body\s*\{[^}]*overflow-y:\s*visible/.test(css), 'narrow or short viewports avoid nested scrolling');
+    equal((html.match(/id="appSplash"/g) || []).length, 1, 'one startup splash');
+    check(/<div\b[^>]*id="appSplash"[^>]*role="status"[^>]*aria-label="[^"]+"/.test(html), 'splash is an accessible named status, not a modal');
+    check(/<img\b[^>]*src="\/app\.ico"[^>]*alt="[^"]+"[^>]*width="112"[^>]*height="112"[^>]*fetchpriority="high"/.test(html), 'splash uses eagerly prioritized app icon with reserved dimensions');
+    check(/class="splash-progress"[^>]*aria-hidden="true"/.test(html), 'decorative progress is hidden from assistive technology');
+    check(/position:\s*fixed;\s*inset:\s*0/.test(rule('.app-splash')), 'splash covers viewport without shifting page layout');
+    for (const declaration of [/opacity:\s*0/, /visibility:\s*hidden/, /pointer-events:\s*none/]) check(declaration.test(rule('.app-splash.leaving')), 'finished splash cannot obscure or intercept workspace: ' + declaration);
+    check(/animation:\s*splash-release\s+\.01s\s+6s\s+forwards/.test(rule('.app-splash')), 'CSS bounds splash lifetime even without startup completion');
+    check(/@keyframes\s+splash-release\s*\{\s*to\s*\{[^}]*opacity:\s*0;\s*visibility:\s*hidden;\s*pointer-events:\s*none/.test(css), 'CSS fallback also releases visibility and pointer interception');
+    check(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?animation:\s*none;\s*transition-duration:\s*\.01s/.test(css), 'reduced motion disables decorative splash animation');
+    check(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\.app-splash\s*\{\s*animation:\s*splash-release\s+\.01s\s+6s\s+forwards/.test(css), 'reduced motion retains fail-safe splash release');
+    console.log('PASS static workspace: thin theme scrollbars, stable gutters, page-flow fallback, accessible icon splash, nonblocking exit and reduced-motion/CSS failsafe');
+  }
+  {
+    const t = setupWorkspace();
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '636px', 'uses visual viewport minus measured document top, actual footer and spacing');
+    check(!t.layout.classes.has('page-flow'));
+    t.window.scrollY = 175;
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '636px', 'rect.top + scrollY keeps workspace height stable when page scrolls');
+    t.geometry.top = 516;
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '320px'); check(!t.layout.classes.has('page-flow'), '320px still permits panel scrolling');
+    t.geometry.top = 516.1;
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '319px', 'available height is floored'); check(t.layout.classes.has('page-flow'), 'below 320px switches to page flow');
+    t.geometry.top = 1000;
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '0px', 'workspace height never becomes negative'); check(t.layout.classes.has('page-flow'));
+    t.geometry.top = 200; t.elements.delete('footer');
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '640px', 'missing footer uses 36px fallback'); check(!t.layout.classes.has('page-flow'), 'resizing back restores panel scrolling');
+    t.window.visualViewport.height = 0;
+    t.evaluate('updateWorkspaceHeight()');
+    equal(t.properties.get('--workspace-height'), '740px', 'unavailable visual viewport height falls back to innerHeight');
+    t.elements.delete('.layout'); const count = t.writes.length;
+    t.evaluate('updateWorkspaceHeight()'); equal(t.writes.length, count, 'missing layout safely does nothing');
+    const fallback = setupWorkspace({ visualViewport: false }); fallback.evaluate('updateWorkspaceHeight()');
+    equal(fallback.properties.get('--workspace-height'), '736px', 'innerHeight works without visualViewport API');
+    console.log('PASS measured workspace height: visual/inner viewport, document top + scrollY stability, footer fallback, flooring, zero clamp and exact page-flow threshold');
+  }
+  {
+    const t = setupWorkspace(); t.start([new Promise(() => {})]);
+    equal(t.frames.size, 1, 'startup requests one layout frame'); equal(t.geometry.reads, 0, 'measurement is deferred until the frame');
+    equal(t.observers.length, 1);
+    const observer = t.observers[0];
+    equal(observer.observed.map(node => [...t.elements].find(([, value]) => value === node)[0]),
+      ['header', '.source-picker', '.search-box', '.hint', '#loginPanel', '#neteaseLoginPanel', '#miguLoginPanel', '#otherPanel', 'footer'], 'observe every source-dependent height contributor, not the layout itself');
+    equal(t.window.listeners.get('resize').length, 1); equal(t.window.visualViewport.listeners.get('resize').length, 1);
+    t.window.dispatch('resize'); t.window.visualViewport.dispatch('resize'); observer.callback([]);
+    equal(t.frames.size, 1, 'window, visual viewport and observer changes coalesce');
+    t.runFrame(); equal(t.geometry.reads, 1); equal(t.properties.get('--workspace-height'), '636px');
+    t.geometry.top += 80; observer.callback([{ target: t.elements.get('.source-picker') }]); observer.callback([]);
+    equal(t.frames.size, 1, 'source-picker height changes schedule exactly one new frame'); equal(t.geometry.reads, 1);
+    t.runFrame(); equal(t.properties.get('--workspace-height'), '556px', 'observer remeasures changed source/header geometry');
+    t.window.visualViewport.height = 620; t.window.visualViewport.dispatch('resize'); t.runFrame();
+    equal(t.properties.get('--workspace-height'), '276px'); check(t.layout.classes.has('page-flow'), 'visual viewport resize can activate page flow');
+    equal(t.frames.size, 0); observer.callback([]); const pendingFrame = [...t.frames.keys()][0];
+    t.window.dispatch('pagehide');
+    check(observer.disconnected, 'pagehide disconnects ResizeObserver'); check(t.cancelledFrames.includes(pendingFrame), 'pagehide cancels outstanding layout frame');
+    check(t.splash.classes.has('leaving'), 'pagehide immediately finishes splash');
+    await t.advance(340); equal(t.splash.removeCount, 1); equal(t.frames.size, 0, 'pagehide leaves no queued layout frame');
+    equal(t.geometry.reads, 3, 'pagehide does not perform another measurement');
+    await t.advance(5000); equal(t.splash.additions.length, 1); equal(t.splash.removeCount, 1, 'late hard timeout cannot finish twice');
+    console.log('PASS workspace scheduling: real ResizeObserver source/header targets, frame coalescing, viewport events, source remeasurement and pagehide cleanup');
+  }
+  {
+    // Vary which prerequisite completes last so no gate can be accidentally omitted.
+    for (const last of ['minimum', 'load', 'requests']) {
+      const t = setupWorkspace({ readyState: 'loading' }), request = deferred(); t.start([request.promise]); t.runFrame();
+      equal(t.window.listeners.get('load').length, 1); check(t.window.listeners.get('load')[0].once, 'load listener is one-shot');
+      if (last !== 'requests') request.resolve('ready');
+      if (last !== 'load') { t.document.readyState = 'complete'; t.window.dispatch('load'); }
+      await t.advance(last === 'minimum' ? 1049 : 1100);
+      check(!t.splash.classes.has('leaving'), last + ' is required before splash can leave'); equal(t.splash.removeCount, 0);
+      if (last === 'minimum') await t.advance(1);
+      else if (last === 'load') { t.document.readyState = 'complete'; t.window.dispatch('load'); await flushPromises(); }
+      else { request.resolve('ready'); await flushPromises(); }
+      check(t.splash.classes.has('leaving'), last + ' completion releases splash'); equal(t.splash.additions, ['leaving']);
+      equal(t.frames.size, 1, 'finish schedules geometry update'); t.runFrame();
+      await t.advance(339); check(t.splash.isConnected, 'splash remains during exit transition');
+      await t.advance(1); check(!t.splash.isConnected, 'splash is removed after transition'); equal(t.splash.removeCount, 1);
+      equal(t.frames.size, 1, 'removal schedules final geometry update'); t.runFrame();
+      await t.advance(5000); equal(t.splash.removeCount, 1, 'all later timers preserve one-time finish'); equal(t.splash.additions, ['leaving']);
+    }
+    const entry = embedded[1].match(startup)[0], calls = [], requests = Array.from({ length: 5 }, () => Promise.resolve());
+    let received;
+    const call = name => () => { calls.push(name); return requests[calls.length - 1]; };
+    vm.runInNewContext(entry, { startWorkspaceUI: value => { received = value; }, refreshFiles: call('files'), initializeLogin: call('login'), neteaseLogin: { refreshStatus: call('netease') }, refreshVip: call('vip'), refreshVocal: call('vocal') });
+    equal(calls, ['files', 'login', 'netease', 'vip', 'vocal'], 'entry starts each initial request once');
+    equal(Array.from(received), requests, 'startup forwards all five real request promises to the readiness gate');
+    console.log('PASS startup gates: load, minimum duration and initial requests each independently block exit; real entry forwards five requests; exit removes exactly once');
+  }
+  {
+    const rejected = setupWorkspace(); rejected.start([Promise.reject(new Error('offline startup failure')), Promise.resolve('ok')]);
+    await rejected.advance(1049); check(!rejected.splash.classes.has('leaving'), 'settled failures still honor minimum');
+    await rejected.advance(1); check(rejected.splash.classes.has('leaving'), 'allSettled permits rejected initial requests without waiting for timeout');
+    const hung = setupWorkspace(), request = deferred(); hung.start([Promise.resolve(), request.promise]);
+    await hung.advance(2399); check(!hung.splash.classes.has('leaving'), 'unfinished request blocks until bounded request timeout');
+    await hung.advance(1); check(hung.splash.classes.has('leaving'), '2400ms request timeout releases hung requests');
+    await hung.advance(340); equal(hung.splash.removeCount, 1);
+    request.reject(new Error('late offline error')); await flushPromises();
+    await hung.advance(5000); equal(hung.splash.removeCount, 1, 'late rejection and hard timeout do not repeat removal'); equal(hung.splash.additions, ['leaving']);
+    const unloaded = setupWorkspace({ readyState: 'loading' }); unloaded.start([new Promise(() => {})]);
+    await unloaded.advance(4199); check(!unloaded.splash.classes.has('leaving'), 'request timeout alone cannot bypass unfinished page load');
+    await unloaded.advance(1); check(unloaded.splash.classes.has('leaving'), '4200ms hard deadline bounds even an unfinished load');
+    await unloaded.advance(340); check(!unloaded.splash.isConnected, 'hard deadline ultimately leaves workspace unobstructed'); equal(unloaded.splash.removeCount, 1);
+    unloaded.window.dispatch('load'); unloaded.window.dispatch('pagehide'); await flushPromises();
+    await unloaded.advance(5000); equal(unloaded.splash.removeCount, 1); equal(unloaded.splash.additions, ['leaving'], 'late load/pagehide remain idempotent');
+    console.log('PASS bounded startup failures: rejected requests settle normally, hung requests release at 2400ms, unfinished load releases at 4200ms, late results never repeat finish');
+  }
+  {
+    const t = setupWorkspace({ reduced: true }); t.start();
+    equal(t.mediaQueries, ['(prefers-reduced-motion: reduce)']);
+    check([...t.timers.values()].some(timer => timer.delay === 0), 'reduced motion requests no minimum display delay');
+    check(![...t.timers.values()].some(timer => timer.delay === 1050), 'reduced motion never installs normal minimum');
+    await t.advance(0); check(t.splash.classes.has('leaving'), 'ready reduced-motion startup exits without 1050ms wait');
+    await t.advance(340); equal(t.splash.removeCount, 1);
+    const fallback = setupWorkspace({ visualViewport: false, resizeObserver: false, splashPresent: false });
+    delete fallback.window.matchMedia; fallback.elements.delete('.hint'); fallback.start(); fallback.runFrame();
+    equal(fallback.properties.get('--workspace-height'), '736px'); equal(fallback.observers.length, 0);
+    await fallback.advance(1390); fallback.runFrame(); check(fallback.geometry.reads >= 2, 'missing optional APIs and splash still finish and remeasure');
+    fallback.window.dispatch('resize'); equal(fallback.frames.size, 1, 'window resize remains available without optional APIs');
+    console.log('PASS reduced motion and compatibility: zero minimum wait, no splash/observer/visual viewport/matchMedia required, window resize retained');
+  }
+  {
+    for (const state of ['anonymous', 'saved', 'failure']) {
+      const t = setup();
+      t.context.fetch = async url => { t.calls.push(url); if (state === 'failure') throw new Error('offline'); return { ok: true, json: async () => ({ ok: true, set: state === 'saved', uin: '12345' }) }; };
+      await t.evaluate('initializeLogin()'); await flushPromises();
+      equal(t.calls, ['/api/cookie'], state + ' startup only checks QQ status, without QR or other provider requests');
+      for (const id of ['#loginPanel', '#neteaseLoginPanel', '#miguLoginPanel']) equal(t.get(id).style.display, 'none', state + ' never auto-opens ' + id);
+      check(t.get('#otherLoginPanel').hidden); equal(t.timers.size, 0, 'status-only startup never schedules QR polling'); equal(t.messages.length, 0);
+      check(t.get('#cookieStatus').textContent.includes(state === 'saved' ? '已保存登录信息' : state === 'failure' ? '登录状态检查失败' : '首次使用'), state + ' updates status text');
+    }
+    console.log('PASS initializeLogin: anonymous/saved/failed status checks update labels only, never auto-open a login panel, start QR requests or poll');
+  }
   {
     const t = setup();
     equal(t.evaluate('_lyricsFormat'), 'txt', 'default TXT');

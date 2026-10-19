@@ -1,10 +1,10 @@
 # Windows 桌面窗口版
 
-本地版本：`1.3.0-desktop`。此改动未推送 GitHub，未替换已发布的 v1.2.0。
+当前版本：`1.3.1-desktop`。本版增加图标启动动画和首屏滚动优化；下载见 [v1.3.1-desktop Release](https://github.com/MeowAndy/Music-Downloader-Web/releases/tag/v1.3.1-desktop)。保留旧版 v1.2.0，不覆盖其发布附件。
 
 ## 使用
 
-双击 `MusicDownloaderWeb-v1.3.0-desktop.exe`，等待解包和本机服务自检，然后进入独立的音乐下载器窗口。默认不打开浏览器或控制台；原有四面板、平台账号、下载、歌词、转换及可选 AI 功能保持原来的网页业务实现。
+双击 `MusicDownloaderWeb-v1.3.1-desktop.exe`，等待解包和本机服务自检，然后进入独立的音乐下载器窗口。默认不打开浏览器或控制台；原有四面板、平台账号、下载、歌词、转换及可选 AI 功能保持原来的网页业务实现。
 
 界面使用 pywebview 6.2.1 和 Microsoft Edge WebView2，不使用旧 IE 内核。Windows 需要已安装的 WebView2 Runtime、.NET Framework 4.6.2 或更新版本。官方运行时入口：<https://developer.microsoft.com/microsoft-edge/webview2/>。缺失或初始化失败时显示原生提示，不自动下载安装运行时。无需安装 Python、Node 或 FFmpeg。
 
@@ -12,9 +12,15 @@
 
 关闭窗口会停止本实例的 HTTP 服务并清理本程序启动的子进程。正在进行的转换、下载和 AI 任务会被中断；请先等待任务结束。已存在、并非由本程序启动的 AI 服务不会被接管或关闭。
 
+## 启动与滚动
+
+页面就绪前显示现有应用图标的淡入、光晕和进度动画，随后平滑退出。初始化失败或超时也会解除启动层，不会一直挡住操作。动画出现在单文件解包与服务自检之后，不代表 EXE 双击后立即显示。系统启用“减少动态效果”（`prefers-reduced-motion`）时，关闭旋转、缩放和光晕动画，并取消最短展示等待。
+
+宽屏按工作区实际位置计算面板可用高度，尽量将四栏保留在首屏；列表较长时使用细圆角滚动条。两栏、单栏或较矮窗口改为页面整体滚动，避免多重内部滚动和内容裁切。登录卡由用户主动打开，不再在启动后自动弹出并挤压工作区。
+
 ## 兼容与诊断
 
-- 浏览器兼容模式：`MusicDownloaderWeb-v1.3.0-desktop.exe --browser`。可在 Windows 快捷方式的目标路径后添加该参数。此模式没有控制台，请通过任务管理器结束实例，或使用默认桌面模式正常关闭。
+- 浏览器兼容模式：`MusicDownloaderWeb-v1.3.1-desktop.exe --browser`。可在 Windows 快捷方式的目标路径后添加该参数。此模式没有控制台，请通过任务管理器结束实例，或使用默认桌面模式正常关闭。
 - 无界面自动验收：环境变量 `MUSIC_DOWNLOADER_NO_BROWSER=1` 优先于所有窗口／浏览器模式，不导入 GUI、不弹出诊断对话框。
 - 数据目录下的 `startup-report.json` 记录受控诊断和当前实例内部地址；早期导入失败的通用说明写入系统临时目录 `MusicDownloaderWeb-startup-error.txt`。
 - 仍使用仅绑定 `127.0.0.1` 的内部 HTTP 服务。默认尝试 8899，占用则使用系统分配的端口；窗口没有地址栏，不会向局域网开放。

@@ -1,21 +1,22 @@
-Music Downloader v1.3.0-desktop（Windows x64 本地桌面版）
+Music Downloader v1.3.1-desktop（Windows x64 本地桌面版）
 
-1. 将 MusicDownloaderWeb-v1.3.0-desktop.exe 放入一个独立、可写的文件夹，双击运行。
+1. 将 MusicDownloaderWeb-v1.3.1-desktop.exe 放入一个独立、可写的文件夹，双击运行。
 2. 无需安装 Python、Node.js、FFmpeg；首次解包请耐心等待，服务就绪后会打开独立软件窗口，无地址栏、无黑色控制台。
 3. 桌面窗口需要 Microsoft Edge WebView2 Runtime 和 .NET Framework 4.6.2 或更新版本。大多数 Windows 10/11 已有；缺失时会提示，不会静默安装。官方入口：https://developer.microsoft.com/microsoft-edge/webview2/
-   兼容模式：为 MusicDownloaderWeb-v1.3.0-desktop.exe 创建快捷方式，在“目标”末尾追加 --browser。此模式会打开浏览器；内部本机端口仍存在，实际地址见 startup-report.json。默认桌面模式关闭窗口会停止本实例服务，并清理本程序启动的 AI；不会停止此前由其他程序启动的 AI。
+   兼容模式：为 MusicDownloaderWeb-v1.3.1-desktop.exe 创建快捷方式，在“目标”末尾追加 --browser。此模式会打开浏览器；内部本机端口仍存在，实际地址见 startup-report.json。默认桌面模式关闭窗口会停止本实例服务，并清理本程序启动的 AI；不会停止此前由其他程序启动的 AI。
    文件列表“保存”打开系统另存为对话框；官网下载和网盘外链交给系统浏览器。上传使用系统文件选择器。
 4. QQ／网易云／咪咕分别使用自己的平台 App 扫码登录；HiFiTi 使用本应用的账号登录／注册弹窗。账号彼此独立，登录不代表拥有所有歌曲下载权限。
 5. QQ／网易云支持默认无时间戳 TXT 歌词，可选 LRC、翻译、罗马音；咪咕提供原文歌词。可选择随音频保存，歌词失败不会删除已经成功的音频。
 6. 仅当获准下载并实际收到 NCM 时，才使用内置工具处理副本；保留原始 NCM，输出可能为 MP3 或 FLAC。不会用试听或其他录音替代目标下载。
 7. HiFiTi 搜索显示官网帖子；账号可见的链接与明确提取码显示在资源卡片。应用不代下载网盘、不自动回复、扣积分或购买。注册以官网实际结果为准；官网接受不等于激活或登录。
-8. 宽屏从左至右：搜索结果、mflac 转换、已下载文件、人声分离；小窗口自动换行。
+8. 宽屏从左至右：搜索结果、mflac 转换、已下载文件、人声分离；按实际窗口高度尽量显示完整工作区，长列表使用细滚动条。小窗口自动换行并使用页面整体滚动，减少嵌套滚动。
+   服务就绪后先显示应用图标动画，再平滑进入界面；系统启用“减少动态效果”（prefers-reduced-motion）时会减少动画并取消最短展示等待。初始化异常也会自动解除启动层。点击平台登录按钮才展开登录界面。
 9. AI 人声分离组件为可选独立下载，约 749 MB，不包含在 EXE 中。支持分段下载、断点续传和可用源选择，具体速度取决于网络；需额外磁盘空间和本机 9999 端口可用。
 10. 数据通常保存在 EXE 旁；不可写时回退到 LOCALAPPDATA/MusicDownloaderWeb。音频／歌词保存到 output。
 11. 不要把运行过的整个文件夹发给别人！只发送原始 EXE 或此次干净 ZIP。qq_cookie.txt、netease-auth.json、日志、缓存、output 和 AI 安装目录均不应公开。
 12. 反馈问题可提供脱敏后的启动诊断及截图，切勿发送密码、Cookie、Token 或账号文件。
 
-本地桌面版验收包括：离线回归、真实 WebView2 的页面及系统对话框、独立无账号目录和移除开发工具 PATH 的实际 EXE。窗口验收检查三次启动／关闭、端口冲突回退和进程退出；业务验收包括搜索、二维码创建／等待／取消和工具转换。没有执行真实扫码确认、新账号注册或全新 AI 安装；这不等于另一台干净电脑或全部账号权益均已验证。本版未上传 GitHub／Release。
+本地桌面版验收包括：离线回归、真实 WebView2 的页面及系统对话框、独立无账号目录和移除开发工具 PATH 的实际 EXE。窗口验收检查三次启动／关闭、端口冲突回退和进程退出；业务验收包括搜索、二维码创建／等待／取消和工具转换。没有执行真实扫码确认、新账号注册或全新 AI 安装；这不等于另一台干净电脑或全部账号权益均已验证。本版发布入口：https://github.com/MeowAndy/Music-Downloader-Web/releases/tag/v1.3.1-desktop
 平台接口、网络、防火墙及账号权限仍可能影响功能。不会绕过验证码、付费或版权限制。
 
 代码与 Release：https://github.com/MeowAndy/Music-Downloader-Web
